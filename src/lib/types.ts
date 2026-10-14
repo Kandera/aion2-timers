@@ -1,4 +1,6 @@
 export type Category = "event" | "boss" | "pvp" | "system";
+export type AlarmTone = 1 | 2 | 3;
+export type OverlayList = "all" | "next3" | "soon";
 
 /** ISO weekday: Monday = 1, Sunday = 7. */
 export type Weekday = 1 | 2 | 3 | 4 | 5 | 6 | 7;
@@ -38,6 +40,9 @@ export type Timer = {
   respawnIntervalMinutes: number | null;
   /** Absolute next spawn for rolling timers. Null until set. */
   nextAt: string | null;
+  alarmTone: AlarmTone | null;
+  alarmOnStart: boolean;
+  seenUntil: string | null;
   note: string;
 };
 
@@ -61,7 +66,11 @@ export type Settings = {
   scale: number;
   clickThrough: boolean;
   alwaysOnTop: boolean;
-  compact: boolean;
+  overlayList: OverlayList;
+  overlayMonitor: string | null;
+  quietEnabled: boolean;
+  quietFrom: number;
+  quietUntil: number;
   overlayHours: number;
   overlayVisible: boolean;
   overlayX: number | null;

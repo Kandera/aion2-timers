@@ -1,6 +1,6 @@
 import { DateTime } from "luxon";
 import { formatCountdown, formatRule, formatWhen } from "./format.ts";
-import { evaluate, type Phase } from "./schedule.ts";
+import { evaluate, upcomingStarts, type Phase } from "./schedule.ts";
 import type { Category, Timer } from "./types.ts";
 
 export type RowView = {
@@ -14,6 +14,8 @@ export type RowView = {
   when: string;
   soon: boolean;
   canKill: boolean;
+  canSee: boolean;
+  later: string;
   overlay: boolean;
   alarm: boolean;
 };
@@ -38,6 +40,8 @@ export function present(timer: Timer, now: DateTime, zone: string): RowView {
     when,
     soon,
     canKill: timer.respawnIntervalMinutes != null && timer.respawnIntervalMinutes >= 1,
+    canSee: timer.schedule.kind !== "rolling" && occurrence.start != null,
+    later: upcomingStarts(timer, now, zone, 3).map((start) => formatWhen(start.setZone(zone))).join(" · "),
     overlay: timer.overlay,
     alarm: timer.alarm,
   };

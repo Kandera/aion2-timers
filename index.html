@@ -51,11 +51,15 @@
             <div class="filters" id="filters" role="tablist" aria-label="Category"></div>
             <div class="toolbar-actions">
               <button type="button" id="paste-spawn">Paste spawn</button>
+              <button type="button" id="export-timers">Export</button>
+              <button type="button" id="import-timers">Import</button>
+              <input id="import-file" type="file" accept="application/json,.json" hidden />
+              <button type="button" id="maintenance">Maintenance</button>
               <button type="button" id="overlay-toggle">Hide overlay</button>
-              <button type="button" id="add-timer" class="primary">Add timer</button>
             </div>
           </div>
           <p id="paste-status" class="hint"></p>
+          <p id="clock-warning" class="hint"></p>
           <div id="list" class="list"></div>
         </div>
         <form id="settings-page" class="settings" hidden>
@@ -117,7 +121,28 @@
             </label>
             <p class="hint">Hours. Live and overdue stay. Later pinned timers stay in the list.</p>
             <label class="check"><input id="overlay-visible" type="checkbox" /> Show overlay</label>
-            <label class="check"><input id="compact" type="checkbox" /> Compact, next 3</label>
+            <label class="field">Overlay list
+              <select id="overlay-list">
+                <option value="all">All due</option>
+                <option value="next3">Next 3</option>
+                <option value="soon">Live and under 15 min</option>
+              </select>
+            </label>
+            <label class="field">Monitor
+              <select id="overlay-monitor">
+                <option value="">Current position</option>
+              </select>
+            </label>
+            <label class="check"><input id="quiet-enabled" type="checkbox" /> Quiet hours, no sound</label>
+            <div class="split">
+              <label class="field">From hour
+                <input id="quiet-from" type="number" min="0" max="23" />
+              </label>
+              <label class="field">Until hour
+                <input id="quiet-until" type="number" min="0" max="23" />
+              </label>
+            </div>
+            <p class="hint">Local hours. The row stays. A sound that falls in this window is skipped.</p>
             <label class="check"><input id="click-through" type="checkbox" /> Click-through</label>
             <label class="check"><input id="always-on-top" type="checkbox" /> Always on top</label>
             <label class="field">Opacity <output id="opacity-value"></output>

@@ -12,8 +12,10 @@ const prefs = {
   customized: false,
   respawnIntervalMinutes: null,
   nextAt: null,
+  alarmTone: null,
+  alarmOnStart: true,
+  seenUntil: null,
 } as const;
-
 export function catalog(): Timer[] {
   return activeSeeds().map(toTimer);
 }

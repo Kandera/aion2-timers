@@ -14,7 +14,11 @@ export function defaultSettings(): Settings {
     scale: 1,
     clickThrough: false,
     alwaysOnTop: true,
-    compact: false,
+    overlayList: "all",
+    overlayMonitor: null,
+    quietEnabled: false,
+    quietFrom: 1,
+    quietUntil: 8,
     overlayHours: 8,
     overlayVisible: true,
     overlayX: null,
@@ -57,12 +61,18 @@ export function mergeCatalog(state: AppState, refresh: boolean): AppState {
 }
 
 function normalize(parsed: Partial<AppState>, refresh = false): AppState {
-  const settings = { ...defaultSettings(), ...(parsed.settings ?? {}) };
+  const raw = (parsed.settings ?? {}) as Partial<Settings> & { compact?: boolean };
+  const settings = { ...defaultSettings(), ...raw };
+  if (raw.overlayList !== "all" && raw.overlayList !== "next3" && raw.overlayList !== "soon") {
+    settings.overlayList = raw.compact ? "next3" : "all";
+  }
   if (!Number.isInteger(settings.overlayHours) || settings.overlayHours < 1 || settings.overlayHours > 48) {
     settings.overlayHours = 8;
   }
+  if (!Number.isInteger(settings.quietFrom) || settings.quietFrom < 0 || settings.quietFrom > 23) settings.quietFrom = 1;
+  if (!Number.isInteger(settings.quietUntil) || settings.quietUntil < 0 || settings.quietUntil > 23) settings.quietUntil = 8;
   const saved = Array.isArray(parsed.timers) ? parsed.timers : [];
-  const byId = new Map(saved.filter((timer) => timer && typeof timer.id === "string").map((timer) => [timer.id, timer]));
+  const byId = new Map(saved.filter((timer) => timer && typeof timer.id === "string").map((timer) => [timer.id, complete(timer)]));
   const timers: Timer[] = [];
 
   for (const seed of catalog()) {
@@ -97,6 +107,19 @@ function fromSeed(seed: Timer, existing: Timer, refresh: boolean): Timer {
     note: existing.customized ? existing.note : seed.note,
     respawnIntervalMinutes: existing.respawnIntervalMinutes,
     nextAt: existing.nextAt,
+    alarmTone: existing.alarmTone,
+    alarmOnStart: existing.alarmOnStart,
+    seenUntil: existing.seenUntil,
     customized: existing.customized,
+  };
+}
+
+function complete(timer: Timer): Timer {
+  const tone = timer.alarmTone;
+  return {
+    ...timer,
+    alarmTone: tone === 1 || tone === 2 || tone === 3 ? tone : null,
+    alarmOnStart: timer.alarmOnStart !== false,
+    seenUntil: typeof timer.seenUntil === "string" ? timer.seenUntil : null,
   };
 }

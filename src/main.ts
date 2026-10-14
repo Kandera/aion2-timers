@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { emit, listen } from "@tauri-apps/api/event";
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import { availableMonitors, getCurrentWindow } from "@tauri-apps/api/window";
 import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { check, type Update } from "@tauri-apps/plugin-updater";
@@ -9,10 +9,11 @@ import { bindEditor } from "./editor.ts";
 import { esc } from "./lib/html.ts";
 import { pullCatalog } from "./lib/catalog.ts";
 import { applySpawns, parseSpawns } from "./lib/paste.ts";
-import { dueAlert, markKilled, zoneOk } from "./lib/schedule.ts";
+import { dueAlerts, inQuietHours, markKilled, markSeen, zoneOk } from "./lib/schedule.ts";
+import { exportTimers, importTimers } from "./lib/share.ts";
 import { playAlert, unlockSound } from "./lib/sound.ts";
 import { loadState, mergeCatalog, resetToCatalog, saveState } from "./lib/state.ts";
-import type { AppState, Category, Timer } from "./lib/types.ts";
+import type { AppState, Category, OverlayList, Timer } from "./lib/types.ts";
 import { formatClock } from "./lib/format.ts";
 import { ordered, present, type RowView } from "./lib/view.ts";
 
@@ -81,6 +82,19 @@ document.querySelector("#paste-spawn")?.addEventListener("click", () => {
 document.querySelector("#catalog-refresh")?.addEventListener("click", () => {
   void refreshCatalog(false);
 });
+document.querySelector("#export-timers")?.addEventListener("click", exportList);
+document.querySelector("#import-timers")?.addEventListener("click", () => {
+  document.querySelector<HTMLInputElement>("#import-file")?.click();
+});
+document.querySelector("#import-file")?.addEventListener("change", (event) => {
+  const input = event.target;
+  if (!(input instanceof HTMLInputElement) || !input.files?.[0]) return;
+  void importList(input.files[0]);
+  input.value = "";
+});
+document.querySelector("#maintenance")?.addEventListener("click", () => {
+  editor?.open(maintenanceDraft(), state.settings.defaultLeadMinutes);
+});
 document.querySelector("#overlay-toggle")?.addEventListener("click", () => {
   state.settings.overlayVisible = !state.settings.overlayVisible;
   commit();
@@ -97,6 +111,10 @@ list?.addEventListener("click", (event) => {
   if (act === "alarm") replace({ ...timer, alarm: !timer.alarm });
   if (act === "kill") {
     const next = markKilled(timer, DateTime.now());
+    if (next) replace(next);
+  }
+  if (act === "seen") {
+    const next = markSeen(timer, DateTime.now(), state.settings.timeZone);
     if (next) replace(next);
   }
 });
@@ -157,6 +175,7 @@ function rowHtml(view: RowView): string {
     <div class="meta">
       <h2>${esc(view.name)}</h2>
       <p>${esc(view.rule)}${view.note ? ` · ${esc(view.note)}` : ""}</p>
+      ${view.later ? `<p class="later">${esc(view.later)}</p>` : ""}
     </div>
     <div class="when">
       <span class="phase" data-phase-label>${esc(phase)}</span>
@@ -165,6 +184,7 @@ function rowHtml(view: RowView): string {
     </div>
     <div class="actions">
       ${kill}
+      ${view.canSee ? `<button type="button" class="kill" data-act="seen">Seen</button>` : ""}
       <button type="button" class="icon" data-act="overlay" aria-pressed="${view.overlay}" aria-label="Show on overlay">${EYE}</button>
       <button type="button" class="icon" data-act="alarm" aria-pressed="${view.alarm}" aria-label="Alarm">${BELL}</button>
       <button type="button" class="icon" data-act="edit" aria-label="Edit">${PEN}</button>
@@ -179,6 +199,8 @@ function tick(): void {
   const localNode = document.querySelector("#clock-lt");
   if (serverNode) serverNode.textContent = server.isValid ? formatClock(server) : "Invalid";
   if (localNode) localNode.textContent = formatClock(now);
+  const warning = document.querySelector("#clock-warning");
+  if (warning) warning.textContent = clockWarning(now);
   const rows = ordered(state.timers, now, state.settings.timeZone, filter);
   const key = rows.map((timer) => timer.id).join("|");
   if (key !== listKey) renderList();
@@ -239,14 +261,18 @@ function bindSettings(): void {
   const zone = document.querySelector<HTMLInputElement>("#zone");
   const lead = document.querySelector<HTMLInputElement>("#default-lead");
   const visible = document.querySelector<HTMLInputElement>("#overlay-visible");
-  const compact = document.querySelector<HTMLInputElement>("#compact");
+  const overlayList = document.querySelector<HTMLSelectElement>("#overlay-list");
   const click = document.querySelector<HTMLInputElement>("#click-through");
   const top = document.querySelector<HTMLInputElement>("#always-on-top");
   const opacity = document.querySelector<HTMLInputElement>("#opacity");
   const scale = document.querySelector<HTMLInputElement>("#scale");
   const hotkey = document.querySelector<HTMLInputElement>("#hotkey");
   const overlayHours = document.querySelector<HTMLInputElement>("#overlay-hours");
-  if (!zone || !lead || !visible || !compact || !click || !top || !opacity || !scale || !hotkey || !overlayHours) return;
+  const quietEnabled = document.querySelector<HTMLInputElement>("#quiet-enabled");
+  const quietFrom = document.querySelector<HTMLInputElement>("#quiet-from");
+  const quietUntil = document.querySelector<HTMLInputElement>("#quiet-until");
+  const monitor = document.querySelector<HTMLSelectElement>("#overlay-monitor");
+  if (!zone || !lead || !visible || !overlayList || !click || !top || !opacity || !scale || !hotkey || !overlayHours || !quietEnabled || !quietFrom || !quietUntil || !monitor) return;
   syncSettings();
   zone.addEventListener("change", () => {
     const next = zone.value.trim();
@@ -288,9 +314,29 @@ function bindSettings(): void {
     state.settings.overlayVisible = visible.checked;
     commit();
   });
-  compact.addEventListener("change", () => {
-    state.settings.compact = compact.checked;
+  overlayList.addEventListener("change", () => {
+    if (!isOverlayList(overlayList.value)) return;
+    state.settings.overlayList = overlayList.value;
     commit();
+  });
+  quietEnabled.addEventListener("change", () => {
+    state.settings.quietEnabled = quietEnabled.checked;
+    commit();
+  });
+  quietFrom.addEventListener("change", () => {
+    const value = Number(quietFrom.value);
+    if (!Number.isInteger(value) || value < 0 || value > 23) return;
+    state.settings.quietFrom = value;
+    commit();
+  });
+  quietUntil.addEventListener("change", () => {
+    const value = Number(quietUntil.value);
+    if (!Number.isInteger(value) || value < 0 || value > 23) return;
+    state.settings.quietUntil = value;
+    commit();
+  });
+  monitor.addEventListener("change", () => {
+    void placeOnMonitor(monitor.value);
   });
   click.addEventListener("change", () => {
     state.settings.clickThrough = click.checked;
@@ -352,7 +398,12 @@ function syncSettings(): void {
   setValue("#hotkey", settings.hotkey);
   setValue("#overlay-hours", String(settings.overlayHours));
   setChecked("#overlay-visible", settings.overlayVisible);
-  setChecked("#compact", settings.compact);
+  setChecked("#overlay-visible", settings.overlayVisible);
+  setValue("#overlay-list", settings.overlayList);
+  setChecked("#quiet-enabled", settings.quietEnabled);
+  setValue("#quiet-from", String(settings.quietFrom));
+  setValue("#quiet-until", String(settings.quietUntil));
+  setValue("#overlay-monitor", settings.overlayMonitor ?? "");
   setChecked("#click-through", settings.clickThrough);
   setChecked("#always-on-top", settings.alwaysOnTop);
   setValue("#opacity", String(settings.opacity));
@@ -406,8 +457,14 @@ async function boot(): Promise<void> {
     saveState(state);
   });
   await listen("overlay-compact", () => {
-    state.settings.compact = !state.settings.compact;
+    state.settings.overlayList = nextList(state.settings.overlayList);
     commit();
+  });
+  await listen<{ id: string }>("timer-seen", (event) => {
+    const timer = state.timers.find((item) => item.id === event.payload.id);
+    if (!timer) return;
+    const next = markSeen(timer, DateTime.now(), state.settings.timeZone);
+    if (next) replace(next);
   });
   await emit("timers-state", state);
   await applyChrome();
@@ -431,6 +488,7 @@ async function boot(): Promise<void> {
   document.addEventListener("pointerdown", unlockSound);
   void checkForUpdate();
   void refreshCatalog(true);
+  void loadMonitors();
 }
 
 async function pasteSpawn(): Promise<void> {
@@ -514,25 +572,132 @@ async function applyChrome(): Promise<void> {
 
 async function checkAlerts(now: DateTime): Promise<void> {
   const seen = new Set(state.alerted);
+  const quiet = inQuietHours(now, state.settings.quietFrom, state.settings.quietUntil, state.settings.quietEnabled);
   let changed = false;
   for (const timer of state.timers) {
-    const due = dueAlert(timer, now, state.settings.timeZone, seen);
-    if (!due) continue;
-    state.alerted.push(due.key);
-    seen.add(due.key);
-    changed = true;
-    playAlert(state.settings.alarmTone, state.settings.alarmVolume);
-    try {
-      sendNotification({ title: "Aion 2 Timers", body: `${timer.name} in ${due.minutes} min` });
-    } catch {
-      // A blocked notification must not stop the sound or the next timer.
+    for (const due of dueAlerts(timer, now, state.settings.timeZone, seen)) {
+      state.alerted.push(due.key);
+      seen.add(due.key);
+      changed = true;
+      if (quiet) continue;
+      playAlert(timer.alarmTone ?? state.settings.alarmTone, state.settings.alarmVolume);
+      const body = due.started ? `${timer.name} started` : `${timer.name} in ${due.minutes} min`;
+      try {
+        sendNotification({ title: "Aion 2 Timers", body });
+      } catch {
+        // A blocked notification must not stop the sound or the next timer.
+      }
     }
   }
   if (!changed) return;
   const cutoff = now.minus({ hours: 36 }).toMillis();
   state.alerted = state.alerted.filter((key) => {
-    const at = DateTime.fromISO(key.slice(key.indexOf("@") + 1));
+    const at = DateTime.fromISO(key.slice(key.indexOf("@") + 1).split("#")[0] ?? "");
     return at.isValid && at.toMillis() >= cutoff;
   });
   saveState(state);
+}
+
+let monitors: { name: string; x: number; y: number }[] = [];
+
+function nextList(current: OverlayList): OverlayList {
+  if (current === "all") return "next3";
+  if (current === "next3") return "soon";
+  return "all";
+}
+
+function isOverlayList(value: string): value is OverlayList {
+  return value === "all" || value === "next3" || value === "soon";
+}
+
+function exportList(): void {
+  const blob = new Blob([exportTimers(state.timers)], { type: "application/json" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "aion2-timers.json";
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+async function importList(file: File): Promise<void> {
+  const status = document.querySelector("#paste-status");
+  const result = importTimers(state.timers, await file.text(), state.settings.defaultLeadMinutes);
+  if ("error" in result) {
+    if (status) status.textContent = result.error;
+    return;
+  }
+  state.timers = result.timers;
+  commit();
+  if (status) status.textContent = result.note;
+}
+
+function maintenanceDraft(): Timer {
+  const at = DateTime.now().setZone(state.settings.timeZone).plus({ hours: 2 }).toUTC().toISO();
+  return {
+    id: "new",
+    name: "Maintenance ends",
+    category: "system",
+    schedule: { kind: "once", at: at ?? "" },
+    durationMinutes: 0,
+    entryMinutes: 0,
+    overlay: true,
+    alarm: true,
+    leadMinutes: state.settings.defaultLeadMinutes,
+    seeded: false,
+    customized: false,
+    respawnIntervalMinutes: null,
+    nextAt: null,
+    alarmTone: null,
+    alarmOnStart: true,
+    seenUntil: null,
+    note: "Server down until this time.",
+  };
+}
+
+async function loadMonitors(): Promise<void> {
+  const select = document.querySelector<HTMLSelectElement>("#overlay-monitor");
+  if (!select) return;
+  try {
+    const found = await availableMonitors();
+    monitors = found.map((monitor, index) => ({
+      name: monitor.name ?? `Display ${index + 1}`,
+      x: monitor.position.x,
+      y: monitor.position.y,
+    }));
+  } catch {
+    return;
+  }
+  const current = state.settings.overlayMonitor ?? "";
+  select.replaceChildren(new Option("Current position", ""));
+  for (const monitor of monitors) select.append(new Option(monitor.name, monitor.name));
+  select.value = current;
+}
+
+async function placeOnMonitor(name: string): Promise<void> {
+  state.settings.overlayMonitor = name || null;
+  const monitor = monitors.find((item) => item.name === name);
+  if (monitor) {
+    state.settings.overlayX = monitor.x + 48;
+    state.settings.overlayY = monitor.y + 80;
+    await invoke("place_overlay", {
+      x: state.settings.overlayX,
+      y: state.settings.overlayY,
+      width: state.settings.overlayWidth,
+      height: state.settings.overlayHeight,
+    });
+  }
+  commit();
+}
+
+function clockWarning(now: DateTime): string {
+  const server = now.setZone(state.settings.timeZone);
+  if (!server.isValid) return "";
+  const lines: string[] = [];
+  const diffHours = (server.offset - now.offset) / 60;
+  if (diffHours !== 0) lines.push(`Server zone and this PC differ by ${Math.abs(diffHours)} h.`);
+  const berlin = now.setZone("Europe/Berlin");
+  if (state.settings.timeZone === "Europe/Berlin" && berlin.month === 10 && berlin.day >= 22 && berlin.day <= 28) {
+    lines.push("25 October: Berlin clocks fall back. Daily reset stays 07:00 UTC. Check both clocks against the game.");
+  }
+  return lines.join(" ");
 }

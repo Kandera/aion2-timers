@@ -35,6 +35,44 @@ export function alertKey(id: string, start: DateTime): string {
   return `${id}@${start.toUTC().toISO()}`;
 }
 
+export function markSeen(timer: Timer, now: DateTime, zone: string): Timer | null {
+  if (timer.schedule.kind === "rolling") return null;
+  const occurrence = evaluate(timer, now, zone);
+  if (!occurrence.start) return null;
+  const seenUntil = occurrence.start.toUTC().toISO();
+  if (!seenUntil) return null;
+  return { ...timer, seenUntil };
+}
+
+export function upcomingStarts(timer: Timer, now: DateTime, zone: string, count: number): DateTime[] {
+  if (count < 1) return [];
+  if (timer.schedule.kind === "rolling" || timer.schedule.kind === "once") {
+    const occurrence = evaluate(timer, now, zone);
+    return occurrence.start && occurrence.phase === "upcoming" ? [occurrence.start] : [];
+  }
+  const zoned = timer.schedule.kind === "utc" ? now.toUTC() : now.setZone(zone);
+  if (!zoned.isValid) return [];
+  const found: DateTime[] = [];
+  const origin = zoned.startOf("day").minus({ days: 1 });
+  for (let day = 0; day < 21 && found.length < count; day += 1) {
+    for (const start of startsOn(origin.plus({ days: day }), timer.schedule)) {
+      if (dismissed(timer, start) || start <= zoned) continue;
+      found.push(start);
+      if (found.length === count) break;
+    }
+  }
+  return found;
+}
+
+export function inQuietHours(now: DateTime, from: number, until: number, enabled: boolean): boolean {
+  if (!enabled || from === until) return false;
+  const hour = now.hour;
+  if (from < until) return hour >= from && hour < until;
+  return hour >= from || hour < until;
+}
+
+export type AlertHit = { key: string; minutes: number; started: boolean };
+
 export function dueAlert(
   timer: Timer,
   now: DateTime,
@@ -52,6 +90,24 @@ export function dueAlert(
   return { key, minutes: Math.max(1, Math.ceil(until / 60_000)) };
 }
 
+export function dueAlerts(
+  timer: Timer,
+  now: DateTime,
+  zone: string,
+  already: ReadonlySet<string>,
+): AlertHit[] {
+  const hits: AlertHit[] = [];
+  const lead = dueAlert(timer, now, zone, already);
+  if (lead) hits.push({ ...lead, started: false });
+  if (!timer.alarm || timer.alarmOnStart === false) return hits;
+  const start = justStarted(timer, now, zone);
+  if (!start) return hits;
+  const key = `${alertKey(timer.id, start)}#start`;
+  if (already.has(key)) return hits;
+  hits.push({ key, minutes: 0, started: true });
+  return hits;
+}
+
 function evaluateRolling(timer: Timer, now: DateTime): Occurrence {
   if (!timer.nextAt) return empty();
   const start = DateTime.fromISO(timer.nextAt);
@@ -63,7 +119,7 @@ function evaluateRolling(timer: Timer, now: DateTime): Occurrence {
 function evaluateOnce(timer: Timer, now: DateTime): Occurrence {
   if (timer.schedule.kind !== "once") return empty();
   const start = DateTime.fromISO(timer.schedule.at);
-  if (!start.isValid) return empty();
+  if (!start.isValid || dismissed(timer, start)) return empty();
   const end = start.plus({ minutes: Math.max(0, timer.durationMinutes) });
   if (now < start) return pointing("upcoming", start, start, now);
   if (timer.durationMinutes > 0 && now < end) return openPhase(timer, start, end, now);
@@ -78,6 +134,7 @@ function evaluateClock(timer: Timer, now: DateTime): Occurrence {
   for (let day = 0; day < 10; day += 1) {
     const date = origin.plus({ days: day });
     for (const start of startsOn(date, timer.schedule)) {
+      if (dismissed(timer, start)) continue;
       const end = endFor(start, timer.schedule, timer.durationMinutes);
       if (!end.isValid || end <= start) {
         if (start > now && (next === null || start < next)) next = start;
@@ -177,4 +234,39 @@ function pointing(phase: Phase, start: DateTime, target: DateTime, now: DateTime
 
 function empty(): Occurrence {
   return { phase: "unset", start: null, target: null, remainingMs: null };
+}
+
+function dismissed(timer: Timer, start: DateTime): boolean {
+  if (!timer.seenUntil) return false;
+  const seen = DateTime.fromISO(timer.seenUntil);
+  return seen.isValid && start.toMillis() <= seen.toMillis();
+}
+
+function justStarted(timer: Timer, now: DateTime, zone: string): DateTime | null {
+  const windowMs = 90_000;
+  if (timer.schedule.kind === "rolling") {
+    if (!timer.nextAt) return null;
+    const start = DateTime.fromISO(timer.nextAt);
+    if (!start.isValid) return null;
+    const age = now.toMillis() - start.toMillis();
+    return age >= 0 && age <= windowMs ? start : null;
+  }
+  if (timer.schedule.kind === "once") {
+    const start = DateTime.fromISO(timer.schedule.at);
+    if (!start.isValid || dismissed(timer, start)) return null;
+    const age = now.toMillis() - start.toMillis();
+    return age >= 0 && age <= windowMs ? start : null;
+  }
+  const zoned = timer.schedule.kind === "utc" ? now.toUTC() : now.setZone(zone);
+  if (!zoned.isValid) return null;
+  const origin = zoned.startOf("day").minus({ days: 1 });
+  let found: DateTime | null = null;
+  for (let day = 0; day < 3; day += 1) {
+    for (const start of startsOn(origin.plus({ days: day }), timer.schedule)) {
+      if (dismissed(timer, start)) continue;
+      const age = zoned.toMillis() - start.toMillis();
+      if (age >= 0 && age <= windowMs) found = start;
+    }
+  }
+  return found;
 }

@@ -16,6 +16,10 @@ The overlay shows pinned timers due within the next hours. Live and overdue stay
 
 Settings, Catalog pulls `catalog.json` from this repo. A schedule fix lands without a new setup. Pins, alarms, notes, and your own timers stay.
 
+The overlay button cycles All, Next 3, and Soon. It fades when nothing is due soon, and comes back when the pointer is over it. Click-through keeps it visible, because a hover cannot reach it.
+
+Export and Import share custom timers as JSON. Maintenance opens a one-time end timer. Seen skips the current clock time without rolling an interval.
+
 The signing private key is not in this repo. `node_modules` and `src-tauri/target` are not either.
 
 ## Develop

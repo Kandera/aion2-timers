@@ -157,15 +157,29 @@ function markup(timer: Timer | null, defaultLead: number, zone: string): string 
     <div class="split checks">
       <label><input name="overlay" type="checkbox" ${timer?.overlay ?? true ? "checked" : ""} /> Show on overlay</label>
       <label><input name="alarm" type="checkbox" ${timer?.alarm ?? true ? "checked" : ""} /> Alarm</label>
+      <label><input name="alarmOnStart" type="checkbox" ${timer?.alarmOnStart !== false ? "checked" : ""} /> Also when it starts</label>
       <label class="field">Lead minutes
         <input name="lead" type="number" min="0" max="180" value="${timer?.leadMinutes ?? defaultLead}" />
       </label>
+      <label class="field">Tone
+        <select name="tone">
+          ${options(
+            [
+              ["", "Default"],
+              ["1", "Chime"],
+              ["2", "Pulse"],
+              ["3", "Bell"],
+            ],
+            timer?.alarmTone == null ? "" : String(timer.alarmTone),
+          )}
+        </select>
+      </label>
     </div>
-    <p class="hint">Lead 0 does not notify. Killed is available only when respawn minutes are set.</p>
+    <p class="hint">Lead 0 does not notify before the start. Killed rolls an interval. Seen skips this clock time.</p>
     <p id="editor-error" class="error" role="alert"></p>
     <footer class="editor-actions">
       ${timer?.seeded ? `<button type="button" data-reset>Reset to catalog</button>` : ""}
-      ${timer && !timer.seeded ? `<button type="button" data-delete class="danger">Delete</button>` : ""}
+      ${timer && !timer.seeded && timer.id !== "new" ? `<button type="button" data-delete class="danger">Delete</button>` : ""}
       <span class="spacer"></span>
       <button type="button" data-cancel>Cancel</button>
       <button type="submit" class="primary">Save timer</button>
@@ -194,7 +208,8 @@ function readTimer(
   const built = buildSchedule(rule, data, original, zone);
   if ("error" in built) return built;
 
-  const id = original?.id ?? `custom-${crypto.randomUUID()}`;
+  const id = original && original.id !== "new" ? original.id : `custom-${crypto.randomUUID()}`;
+  const tone = String(data.get("tone") ?? "");
   const timer: Timer = {
     id,
     name,
@@ -209,6 +224,9 @@ function readTimer(
     customized: false,
     respawnIntervalMinutes: built.respawn,
     nextAt: built.nextAt,
+    alarmTone: tone === "1" ? 1 : tone === "2" ? 2 : tone === "3" ? 3 : null,
+    alarmOnStart: data.get("alarmOnStart") === "on",
+    seenUntil: original?.seenUntil ?? null,
     note: String(data.get("note") ?? "").trim(),
   };
   timer.customized = differsFromCatalog(timer);

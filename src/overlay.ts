@@ -3,7 +3,7 @@ import { DateTime } from "luxon";
 import { formatClock } from "./lib/format.ts";
 import { esc } from "./lib/html.ts";
 import { loadState } from "./lib/state.ts";
-import type { AppState } from "./lib/types.ts";
+import type { AppState, Timer } from "./lib/types.ts";
 import { dueOnOverlay, ordered, present } from "./lib/view.ts";
 
 let state: AppState = loadState();
@@ -16,9 +16,10 @@ const compact = document.querySelector<HTMLButtonElement>("#compact");
 
 compact?.addEventListener("click", () => emit("overlay-compact"));
 rows?.addEventListener("click", (event) => {
-  const button = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-kill]");
-  if (!button || button.disabled) return;
-  void emit("timer-killed", { id: button.dataset.kill });
+  const button = (event.target as HTMLElement).closest<HTMLButtonElement>("button");
+  if (!button) return;
+  if (button.dataset.kill) void emit("timer-killed", { id: button.dataset.kill });
+  if (button.dataset.seen) void emit("timer-seen", { id: button.dataset.seen });
 });
 
 void listen<AppState>("timers-state", (event) => {
@@ -37,9 +38,10 @@ function applyChrome(): void {
   panel.style.setProperty("--scale", String(state.settings.scale));
   if (note) note.hidden = !state.settings.clickThrough;
   if (compact) {
-    compact.textContent = state.settings.compact ? "All" : "Next 3";
-    compact.setAttribute("aria-pressed", String(state.settings.compact));
+    compact.textContent = listLabel(state.settings.overlayList);
+    compact.setAttribute("aria-pressed", String(state.settings.overlayList !== "all"));
   }
+  panel.classList.toggle("idle", idleOverlay() && !state.settings.clickThrough);
 }
 
 function visibleTimers() {
@@ -51,10 +53,12 @@ function visibleTimers() {
     "all",
   );
   const due = pinned.filter((timer) => dueOnOverlay(timer, now, state.settings.timeZone, state.settings.overlayHours));
+  const listed = state.settings.overlayList === "soon" ? due.filter((timer) => isSoon(timer, now)) : due;
+  const shown = state.settings.overlayList === "next3" ? listed.slice(0, 3) : listed;
   return {
-    shown: state.settings.compact ? due.slice(0, 3) : due,
-    later: pinned.length - due.length,
-    compactHidden: state.settings.compact ? Math.max(0, due.length - 3) : 0,
+    shown,
+    later: pinned.length - listed.length,
+    compactHidden: state.settings.overlayList === "next3" ? Math.max(0, listed.length - 3) : 0,
   };
 }
 
@@ -62,7 +66,7 @@ function render(): void {
   if (!rows) return;
   const now = DateTime.now();
   const { shown, later, compactHidden } = visibleTimers();
-  listKey = `${state.settings.compact}:${state.settings.overlayHours}:${shown.map((timer) => timer.id).join("|")}`;
+  listKey = `${state.settings.overlayList}:${state.settings.overlayHours}:${shown.map((timer) => timer.id).join("|")}`;
   if (shown.length === 0) {
     rows.innerHTML = `<p class="empty">${later > 0 ? `Nothing due in the next ${state.settings.overlayHours} h.` : "No timers on the overlay."}</p>`;
     return;
@@ -79,12 +83,15 @@ function render(): void {
         const kill = view.canKill
           ? `<button type="button" class="kill" data-kill="${esc(view.id)}" aria-label="Killed ${esc(view.name)}">Killed</button>`
           : "";
+        const seen = view.canSee
+          ? `<button type="button" class="kill" data-seen="${esc(view.id)}" aria-label="Seen ${esc(view.name)}">Seen</button>`
+          : "";
         return `<article class="overlay-row" data-id="${esc(view.id)}" data-category="${esc(view.category)}" data-phase="${esc(view.phase)}">
           <div class="data-category">${esc(view.category)}</div>
           <strong>${esc(view.name)}</strong>
           <div class="data-phase" data-detail data-phase="${esc(view.phase)}">${esc(detail)}</div>
           <div class="data-count" data-count data-phase="${esc(view.phase)}">${esc(view.countdown)}</div>
-          ${kill}
+          ${kill}${seen}
         </article>`;
       })
       .join("") + (notes.length > 0 ? `<p class="panel-note">${esc(notes.join(" "))}</p>` : "");
@@ -98,7 +105,7 @@ function tick(): void {
   if (serverNode) serverNode.textContent = server.isValid ? formatClock(server) : "Invalid";
   if (localNode) localNode.textContent = formatClock(now);
   const { shown } = visibleTimers();
-  const key = `${state.settings.compact}:${state.settings.overlayHours}:${shown.map((timer) => timer.id).join("|")}`;
+  const key = `${state.settings.overlayList}:${state.settings.overlayHours}:${shown.map((timer) => timer.id).join("|")}`;
   if (key !== listKey) {
     render();
     return;
@@ -126,4 +133,20 @@ function labelFor(phase: string): string {
   if (phase === "overdue") return "Overdue";
   if (phase === "unset") return "Unset";
   return "";
+}
+
+function listLabel(mode: string): string {
+  if (mode === "next3") return "Next 3";
+  if (mode === "soon") return "Soon";
+  return "All";
+}
+
+function idleOverlay(): boolean {
+  const now = DateTime.now();
+  return !state.timers.some((timer) => timer.overlay && isSoon(timer, now));
+}
+
+function isSoon(timer: Timer, now: DateTime): boolean {
+  const view = present(timer, now, state.settings.timeZone);
+  return view.phase === "live" || view.phase === "entry" || view.phase === "overdue" || view.soon;
 }

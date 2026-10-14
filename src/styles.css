@@ -389,8 +389,13 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.62); }
   border-radius: 14px;
   overflow: hidden;
   opacity: var(--opacity, 0.94);
+  transition: opacity 180ms ease;
   font-size: calc(13px * var(--scale, 1));
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+.panel.idle:not(:hover) {
+  opacity: calc(var(--opacity, 0.94) * 0.18);
 }
 
 .panel-head {

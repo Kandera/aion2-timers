@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "test": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test tests/schedule.test.ts tests/paste.test.ts",
+    "test": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test tests/schedule.test.ts tests/paste.test.ts tests/list.test.ts",
     "tauri": "tauri"
   },
   "dependencies": {

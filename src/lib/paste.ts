@@ -121,6 +121,9 @@ function fieldTimer(hit: SpawnHit, leadMinutes: number, taken: Set<string>): Tim
     customized: true,
     respawnIntervalMinutes: null,
     nextAt: hit.nextAt,
+    alarmTone: null,
+    alarmOnStart: true,
+    seenUntil: null,
     note: "Pasted spawn. Set an interval to roll after a kill.",
   };
 }
