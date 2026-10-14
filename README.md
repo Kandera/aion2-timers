@@ -10,23 +10,21 @@ Download the Windows setup from the [latest release](https://github.com/Kandera/
 
 Settings → Updates checks GitHub for a newer signed setup, then installs it and restarts.
 
-Field boss times are not pulled from aion2timers.com. That site blocks automated fetches.
+## Use
 
-## 0.1.1
+Paste spawn reads `Gartua 00:34`, `Immortal Gartua Spawns at 6:43 PM`, or a copied timer row. Loot text and a Korean name on the same line are ignored. The clock after `Spawns in` is used, in the server zone. A matching field boss keeps its interval.
 
-Ships in the 0.1.1 installer.
+Export and Import share custom timers as JSON. Catalog timers stay put.
 
-- Paste spawn reads `Gartua 00:34`, `Immortal Gartua Spawns at 6:43 PM`, or a copied aion2timers row. Loot and the Korean name are ignored. The clock after Spawns in is used. A field boss keeps its interval.
-- Export and Import share custom timers as JSON. Catalog timers stay put.
-- The overlay cycles All, Next 3, and Soon. It fades when nothing is soon. Click-through stays visible.
-- Pick the overlay monitor in Settings. The app does not read the game window.
-- Each timer can have its own tone, and a second alert when it starts. Quiet hours mute the sound. The row stays.
-- Seen skips one clock time. Killed still rolls an interval.
-- Each row shows the next three times. Maintenance opens a one-time end timer.
-- Settings, Catalog pulls `catalog.json` from this repo without a new setup.
+The overlay button cycles All, Next 3, and Soon. It fades when nothing is soon, and comes back under the pointer. Click-through stays visible. Pick the monitor under Settings → Overlay.
 
+Each timer can have its own tone, and a second alert when it starts. Quiet hours mute the sound. The row stays. Seen skips one clock time. Killed still rolls an interval.
 
-The signing private key is not in this repo. `node_modules` and `src-tauri/target` are not either.
+Each row shows the next three times. Maintenance opens a one-time end timer.
+
+Settings → Catalog pulls `catalog.json` from this repo, so a schedule fix lands without a new setup. Pins, alarms, notes, and your own timers stay.
+
+Close the editor window to keep the overlay and alarms in the tray. Quit from the tray icon.
 
 ## Develop
 
@@ -35,5 +33,3 @@ npm install
 npm test
 npm run tauri dev
 ```
-
-Close the editor window to keep the overlay and alarms in the tray. Quit from the tray icon.
