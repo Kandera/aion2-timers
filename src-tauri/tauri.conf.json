@@ -48,8 +48,10 @@
     "active": true,
     "targets": ["nsis"],
     "createUpdaterArtifacts": true,
-    "nsis": {
-      "installMode": "currentUser"
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      }
     },
     "icon": [
       "icons/32x32.png",
