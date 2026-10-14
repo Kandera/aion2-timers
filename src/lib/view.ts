@@ -43,6 +43,14 @@ export function present(timer: Timer, now: DateTime, zone: string): RowView {
   };
 }
 
+export function dueOnOverlay(timer: Timer, now: DateTime, zone: string, hours: number): boolean {
+  const occurrence = evaluate(timer, now, zone);
+  if (occurrence.phase === "unset") return false;
+  if (occurrence.phase !== "upcoming") return true;
+  const limit = Math.min(48, Math.max(1, hours)) * 3_600_000;
+  return occurrence.remainingMs != null && occurrence.remainingMs <= limit;
+}
+
 export function ordered(
   timers: Timer[],
   now: DateTime,

@@ -7,9 +7,11 @@ import { check, type Update } from "@tauri-apps/plugin-updater";
 import { DateTime } from "luxon";
 import { bindEditor } from "./editor.ts";
 import { esc } from "./lib/html.ts";
+import { pullCatalog } from "./lib/catalog.ts";
+import { applySpawns, parseSpawns } from "./lib/paste.ts";
 import { dueAlert, markKilled, zoneOk } from "./lib/schedule.ts";
 import { playAlert, unlockSound } from "./lib/sound.ts";
-import { loadState, resetToCatalog, saveState } from "./lib/state.ts";
+import { loadState, mergeCatalog, resetToCatalog, saveState } from "./lib/state.ts";
 import type { AppState, Category, Timer } from "./lib/types.ts";
 import { formatClock } from "./lib/format.ts";
 import { ordered, present, type RowView } from "./lib/view.ts";
@@ -73,6 +75,12 @@ document.querySelector("#update-install")?.addEventListener("click", () => {
 document.querySelector("#nav-timers")?.addEventListener("click", () => showPage("timers"));
 document.querySelector("#nav-settings")?.addEventListener("click", () => showPage("settings"));
 document.querySelector("#add-timer")?.addEventListener("click", () => editor?.open(null, state.settings.defaultLeadMinutes));
+document.querySelector("#paste-spawn")?.addEventListener("click", () => {
+  void pasteSpawn();
+});
+document.querySelector("#catalog-refresh")?.addEventListener("click", () => {
+  void refreshCatalog(false);
+});
 document.querySelector("#overlay-toggle")?.addEventListener("click", () => {
   state.settings.overlayVisible = !state.settings.overlayVisible;
   commit();
@@ -237,7 +245,8 @@ function bindSettings(): void {
   const opacity = document.querySelector<HTMLInputElement>("#opacity");
   const scale = document.querySelector<HTMLInputElement>("#scale");
   const hotkey = document.querySelector<HTMLInputElement>("#hotkey");
-  if (!zone || !lead || !visible || !compact || !click || !top || !opacity || !scale || !hotkey) return;
+  const overlayHours = document.querySelector<HTMLInputElement>("#overlay-hours");
+  if (!zone || !lead || !visible || !compact || !click || !top || !opacity || !scale || !hotkey || !overlayHours) return;
   syncSettings();
   zone.addEventListener("change", () => {
     const next = zone.value.trim();
@@ -255,6 +264,12 @@ function bindSettings(): void {
     const value = Number(lead.value);
     if (!Number.isInteger(value) || value < 0) return;
     state.settings.defaultLeadMinutes = value;
+    commit();
+  });
+  overlayHours.addEventListener("change", () => {
+    const value = Number(overlayHours.value);
+    if (!Number.isInteger(value) || value < 1 || value > 48) return;
+    state.settings.overlayHours = value;
     commit();
   });
   document.querySelectorAll<HTMLInputElement>("input[name=alarm-tone]").forEach((input) => {
@@ -335,6 +350,7 @@ function syncSettings(): void {
   setValue("#zone", settings.timeZone);
   setValue("#default-lead", String(settings.defaultLeadMinutes));
   setValue("#hotkey", settings.hotkey);
+  setValue("#overlay-hours", String(settings.overlayHours));
   setChecked("#overlay-visible", settings.overlayVisible);
   setChecked("#compact", settings.compact);
   setChecked("#click-through", settings.clickThrough);
@@ -414,6 +430,42 @@ async function boot(): Promise<void> {
   unlockSound();
   document.addEventListener("pointerdown", unlockSound);
   void checkForUpdate();
+  void refreshCatalog(true);
+}
+
+async function pasteSpawn(): Promise<void> {
+  const status = document.querySelector("#paste-status");
+  let text = "";
+  try {
+    text = await navigator.clipboard.readText();
+  } catch {
+    if (status) status.textContent = "Clipboard blocked.";
+    return;
+  }
+  const hits = parseSpawns(text, DateTime.now(), state.settings.timeZone);
+  if (hits.length === 0) {
+    if (status) status.textContent = "No spawn time in the clipboard. Use Gartua 00:34.";
+    return;
+  }
+  const result = applySpawns(state.timers, hits, state.settings.defaultLeadMinutes, state.settings.timeZone);
+  state.timers = result.timers;
+  commit();
+  renderList();
+  if (status) status.textContent = result.notes.join(" ");
+}
+
+async function refreshCatalog(quiet: boolean): Promise<void> {
+  const status = document.querySelector("#catalog-status");
+  try {
+    const result = await pullCatalog();
+    state = mergeCatalog(state, true);
+    commit();
+    renderList();
+    syncSettings();
+    if (status) status.textContent = result.changed ? `Catalog updated. ${result.count} timers.` : "Catalog is already current.";
+  } catch (error) {
+    if (status) status.textContent = quiet ? "Using the saved schedule." : error instanceof Error ? error.message : "Catalog fetch failed.";
+  }
 }
 
 let pendingUpdate: Update | null = null;

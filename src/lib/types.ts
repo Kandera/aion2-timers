@@ -41,6 +41,16 @@ export type Timer = {
   note: string;
 };
 
+export type CatalogSeed = {
+  id: string;
+  name: string;
+  category: Category;
+  schedule: Schedule;
+  durationMinutes: number;
+  entryMinutes: number;
+  note: string;
+};
+
 export type Settings = {
   timeZone: string;
   defaultLeadMinutes: number;
@@ -52,6 +62,7 @@ export type Settings = {
   clickThrough: boolean;
   alwaysOnTop: boolean;
   compact: boolean;
+  overlayHours: number;
   overlayVisible: boolean;
   overlayX: number | null;
   overlayY: number | null;

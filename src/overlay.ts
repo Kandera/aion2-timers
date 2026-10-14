@@ -4,7 +4,7 @@ import { formatClock } from "./lib/format.ts";
 import { esc } from "./lib/html.ts";
 import { loadState } from "./lib/state.ts";
 import type { AppState } from "./lib/types.ts";
-import { ordered, present } from "./lib/view.ts";
+import { dueOnOverlay, ordered, present } from "./lib/view.ts";
 
 let state: AppState = loadState();
 let listKey = "";
@@ -50,41 +50,44 @@ function visibleTimers() {
     state.settings.timeZone,
     "all",
   );
-  return state.settings.compact ? pinned.slice(0, 3) : pinned;
+  const due = pinned.filter((timer) => dueOnOverlay(timer, now, state.settings.timeZone, state.settings.overlayHours));
+  return {
+    shown: state.settings.compact ? due.slice(0, 3) : due,
+    later: pinned.length - due.length,
+    compactHidden: state.settings.compact ? Math.max(0, due.length - 3) : 0,
+  };
 }
 
 function render(): void {
   if (!rows) return;
   const now = DateTime.now();
-  const timers = visibleTimers();
-  listKey = `${state.settings.compact}:${timers.map((timer) => timer.id).join("|")}`;
-  if (timers.length === 0) {
-    rows.innerHTML = `<p class="empty">No timers on the overlay.</p>`;
+  const { shown, later, compactHidden } = visibleTimers();
+  listKey = `${state.settings.compact}:${state.settings.overlayHours}:${shown.map((timer) => timer.id).join("|")}`;
+  if (shown.length === 0) {
+    rows.innerHTML = `<p class="empty">${later > 0 ? `Nothing due in the next ${state.settings.overlayHours} h.` : "No timers on the overlay."}</p>`;
     return;
   }
-  const extra = state.settings.compact
-    ? state.timers.filter((timer) => timer.overlay).length - timers.length
-    : 0;
+  const notes = [
+    compactHidden > 0 ? `${compactHidden} more hidden by compact.` : "",
+    later > 0 ? `${later} later, outside ${state.settings.overlayHours} h.` : "",
+  ].filter(Boolean);
   rows.innerHTML =
-    timers
+    shown
       .map((timer) => {
         const view = present(timer, now, state.settings.timeZone);
         const detail = view.phase === "upcoming" ? view.when : labelFor(view.phase);
         const kill = view.canKill
-          ? `<button type="button" class="kill" data-kill="${esc(view.id)}" ${state.settings.clickThrough ? "disabled" : ""}>Killed</button>`
+          ? `<button type="button" class="kill" data-kill="${esc(view.id)}" aria-label="Killed ${esc(view.name)}">Killed</button>`
           : "";
-        return `<article class="overlay-row" data-id="${esc(view.id)}" data-category="${view.category}" data-phase="${view.phase}">
-          <div data-tauri-drag-region>
-            <h2 data-tauri-drag-region title="${esc(view.name)}">${esc(view.name)}</h2>
-            <p data-tauri-drag-region data-detail>${esc(detail)}</p>
-          </div>
-          <div class="when">
-            <strong class="count" data-tauri-drag-region data-count data-phase="${view.phase}" data-soon="${view.soon}">${esc(view.countdown)}</strong>
-            ${kill}
-          </div>
+        return `<article class="overlay-row" data-id="${esc(view.id)}" data-category="${esc(view.category)}" data-phase="${esc(view.phase)}">
+          <div class="data-category">${esc(view.category)}</div>
+          <strong>${esc(view.name)}</strong>
+          <div class="data-phase" data-detail data-phase="${esc(view.phase)}">${esc(detail)}</div>
+          <div class="data-count" data-count data-phase="${esc(view.phase)}">${esc(view.countdown)}</div>
+          ${kill}
         </article>`;
       })
-      .join("") + (extra > 0 ? `<p class="panel-note">${extra} more hidden by compact.</p>` : "");
+      .join("") + (notes.length > 0 ? `<p class="panel-note">${esc(notes.join(" "))}</p>` : "");
 }
 
 function tick(): void {
@@ -94,14 +97,14 @@ function tick(): void {
   const localNode = document.querySelector("#clock-lt");
   if (serverNode) serverNode.textContent = server.isValid ? formatClock(server) : "Invalid";
   if (localNode) localNode.textContent = formatClock(now);
-  const timers = visibleTimers();
-  const key = `${state.settings.compact}:${timers.map((timer) => timer.id).join("|")}`;
+  const { shown } = visibleTimers();
+  const key = `${state.settings.compact}:${state.settings.overlayHours}:${shown.map((timer) => timer.id).join("|")}`;
   if (key !== listKey) {
     render();
     return;
   }
   if (!rows) return;
-  for (const timer of timers) {
+  for (const timer of shown) {
     const row = rows.querySelector(`[data-id="${CSS.escape(timer.id)}"]`);
     if (!row) continue;
     const view = present(timer, now, state.settings.timeZone);

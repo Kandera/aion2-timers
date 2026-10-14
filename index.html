@@ -50,10 +50,12 @@
           <div class="toolbar">
             <div class="filters" id="filters" role="tablist" aria-label="Category"></div>
             <div class="toolbar-actions">
+              <button type="button" id="paste-spawn">Paste spawn</button>
               <button type="button" id="overlay-toggle">Hide overlay</button>
               <button type="button" id="add-timer" class="primary">Add timer</button>
             </div>
           </div>
+          <p id="paste-status" class="hint"></p>
           <div id="list" class="list"></div>
         </div>
         <form id="settings-page" class="settings" hidden>
@@ -101,7 +103,19 @@
             </div>
           </section>
           <section>
+            <h2>Catalog</h2>
+            <p id="catalog-status" class="hint">Using the saved schedule.</p>
+            <div class="hotkey-row">
+              <button type="button" id="catalog-refresh">Refresh catalog</button>
+            </div>
+            <p class="hint">Pulls catalog.json from the repo. Refresh replaces seeded schedules. Pins, alarms, notes, and your own timers stay.</p>
+          </section>
+          <section>
             <h2>Overlay</h2>
+            <label class="field">Due within
+              <input id="overlay-hours" name="overlayHours" type="number" min="1" max="48" />
+            </label>
+            <p class="hint">Hours. Live and overdue stay. Later pinned timers stay in the list.</p>
             <label class="check"><input id="overlay-visible" type="checkbox" /> Show overlay</label>
             <label class="check"><input id="compact" type="checkbox" /> Compact, next 3</label>
             <label class="check"><input id="click-through" type="checkbox" /> Click-through</label>

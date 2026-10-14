@@ -15,6 +15,7 @@ export function defaultSettings(): Settings {
     clickThrough: false,
     alwaysOnTop: true,
     compact: false,
+    overlayHours: 8,
     overlayVisible: true,
     overlayX: null,
     overlayY: null,
@@ -51,8 +52,15 @@ export function resetToCatalog(timer: Timer, leadMinutes: number): Timer | null 
   return { ...seed, leadMinutes };
 }
 
-function normalize(parsed: Partial<AppState>): AppState {
+export function mergeCatalog(state: AppState, refresh: boolean): AppState {
+  return normalize(state, refresh);
+}
+
+function normalize(parsed: Partial<AppState>, refresh = false): AppState {
   const settings = { ...defaultSettings(), ...(parsed.settings ?? {}) };
+  if (!Number.isInteger(settings.overlayHours) || settings.overlayHours < 1 || settings.overlayHours > 48) {
+    settings.overlayHours = 8;
+  }
   const saved = Array.isArray(parsed.timers) ? parsed.timers : [];
   const byId = new Map(saved.filter((timer) => timer && typeof timer.id === "string").map((timer) => [timer.id, timer]));
   const timers: Timer[] = [];
@@ -64,11 +72,12 @@ function normalize(parsed: Partial<AppState>): AppState {
       continue;
     }
     byId.delete(seed.id);
-    timers.push(existing.customized ? { ...seed, ...existing, id: seed.id, seeded: true } : preferences(seed, existing));
+    timers.push(fromSeed(seed, existing, refresh));
   }
 
   for (const custom of byId.values()) {
     if (!custom.seeded) timers.push(custom);
+    else if (custom.customized) timers.push({ ...custom, seeded: false });
   }
 
   return {
@@ -78,12 +87,16 @@ function normalize(parsed: Partial<AppState>): AppState {
   };
 }
 
-function preferences(seed: Timer, existing: Timer): Timer {
+function fromSeed(seed: Timer, existing: Timer, refresh: boolean): Timer {
+  if (!refresh && existing.customized) return { ...seed, ...existing, id: seed.id, seeded: true };
   return {
     ...seed,
     overlay: existing.overlay,
     alarm: existing.alarm,
     leadMinutes: existing.leadMinutes,
-    note: existing.note ?? seed.note,
+    note: existing.customized ? existing.note : seed.note,
+    respawnIntervalMinutes: existing.respawnIntervalMinutes,
+    nextAt: existing.nextAt,
+    customized: existing.customized,
   };
 }
