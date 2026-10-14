@@ -60,16 +60,14 @@ export function parseState(raw: string): AppState | null {
 
 export function mergeStores(local: AppState, saved: AppState | null): AppState {
   if (!saved) return local;
-  const byId = new Map(local.timers.map((timer) => [timer.id, timer]));
-  for (const timer of saved.timers) {
-    if (!byId.has(timer.id) || (!timer.seeded && byId.get(timer.id)?.seeded)) byId.set(timer.id, timer);
+  const byId = new Map(saved.timers.map((timer) => [timer.id, timer]));
+  for (const timer of local.timers) {
+    if (!byId.has(timer.id)) byId.set(timer.id, timer);
   }
-  const localCustoms = local.timers.some((timer) => !timer.seeded);
-  const savedCustoms = saved.timers.some((timer) => !timer.seeded);
   return {
-    settings: !localCustoms && savedCustoms ? saved.settings : local.settings,
+    settings: saved.settings,
     timers: [...byId.values()],
-    alerted: [...new Set([...local.alerted, ...saved.alerted])],
+    alerted: [...new Set([...saved.alerted, ...local.alerted])],
   };
 }
 export function resetToCatalog(timer: Timer, leadMinutes: number): Timer | null {

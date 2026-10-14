@@ -67,9 +67,10 @@ test("import adds a custom timer and leaves catalog timers alone", () => {
   assert.match(result.note, /1 new/);
 });
 
-test("a file store keeps custom timers when the window store was wiped", () => {
+test("a file store keeps settings and custom timers when the window store was wiped", () => {
   const local = freshState();
   const saved = freshState();
+  saved.settings = { ...saved.settings, timeZone: "Etc/GMT-2", opacity: 0.5, hotkey: "Ctrl+Shift+T", quietEnabled: true };
   saved.timers.push({
     ...local.timers[0],
     id: "field-gartua",
@@ -79,6 +80,13 @@ test("a file store keeps custom timers when the window store was wiped", () => {
     customized: true,
     nextAt: "2026-10-15T00:34:00.000Z",
   });
+  const pinned = saved.timers.find((timer) => timer.id === "shugo-festival");
+  if (pinned) pinned.overlay = false;
   const merged = mergeStores(local, saved);
+  assert.equal(merged.settings.timeZone, "Etc/GMT-2");
+  assert.equal(merged.settings.opacity, 0.5);
+  assert.equal(merged.settings.hotkey, "Ctrl+Shift+T");
+  assert.equal(merged.settings.quietEnabled, true);
+  assert.equal(merged.timers.find((timer) => timer.id === "shugo-festival")?.overlay, false);
   assert.equal(merged.timers.some((timer) => timer.id === "field-gartua"), true);
 });
