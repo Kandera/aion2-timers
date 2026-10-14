@@ -159,7 +159,7 @@ function bindSettingsTabs(): void {
 function bindWindowDrag(): void {
   for (const zone of [document.querySelector(".rail"), document.querySelector(".top")]) {
     zone?.addEventListener("pointerdown", (event) => {
-      if (event.button !== 0) return;
+      if (!(event instanceof PointerEvent) || event.button !== 0) return;
       const target = event.target;
       if (!(target instanceof Element)) return;
       if (target.closest("button, input, select, textarea, a")) return;
