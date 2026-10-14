@@ -2,7 +2,7 @@
 
 Desktop timers for Aion 2 events, bosses, and your own field bosses. The overlay follows what you pin in the editor.
 
-It does not read the game client, packets, or memory. V:0.1 by Kandera. Licensed under MIT.
+It does not read the game client, packets, or memory. V:0.1.1 by Kandera. Licensed under MIT.
 
 ## Install
 
@@ -12,9 +12,9 @@ Settings → Updates checks GitHub for a newer signed setup, then installs it an
 
 Field boss times are not pulled from aion2timers.com. That site blocks automated fetches.
 
-## Added since 0.1.0
+## 0.1.1
 
-Not in the 0.1.0 installer yet.
+Ships in the 0.1.1 installer.
 
 - Paste spawn reads `Gartua 00:34`, `Immortal Gartua Spawns at 6:43 PM`, or a copied aion2timers row. Loot and the Korean name are ignored. The clock after Spawns in is used. A field boss keeps its interval.
 - Export and Import share custom timers as JSON. Catalog timers stay put.
