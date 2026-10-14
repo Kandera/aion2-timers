@@ -50,6 +50,28 @@ export function saveState(state: AppState): void {
   localStorage.setItem(STATE_KEY, JSON.stringify(state));
 }
 
+export function parseState(raw: string): AppState | null {
+  try {
+    return normalize(JSON.parse(raw) as Partial<AppState>);
+  } catch {
+    return null;
+  }
+}
+
+export function mergeStores(local: AppState, saved: AppState | null): AppState {
+  if (!saved) return local;
+  const byId = new Map(local.timers.map((timer) => [timer.id, timer]));
+  for (const timer of saved.timers) {
+    if (!byId.has(timer.id) || (!timer.seeded && byId.get(timer.id)?.seeded)) byId.set(timer.id, timer);
+  }
+  const localCustoms = local.timers.some((timer) => !timer.seeded);
+  const savedCustoms = saved.timers.some((timer) => !timer.seeded);
+  return {
+    settings: !localCustoms && savedCustoms ? saved.settings : local.settings,
+    timers: [...byId.values()],
+    alerted: [...new Set([...local.alerted, ...saved.alerted])],
+  };
+}
 export function resetToCatalog(timer: Timer, leadMinutes: number): Timer | null {
   const seed = catalog().find((item) => item.id === timer.id);
   if (!seed) return null;

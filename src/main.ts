@@ -12,7 +12,7 @@ import { applySpawns, parseSpawns } from "./lib/paste.ts";
 import { dueAlerts, inQuietHours, markKilled, markSeen, zoneOk } from "./lib/schedule.ts";
 import { exportTimers, importTimers } from "./lib/share.ts";
 import { playAlert, unlockSound } from "./lib/sound.ts";
-import { loadState, mergeCatalog, resetToCatalog, saveState } from "./lib/state.ts";
+import { loadState, mergeCatalog, mergeStores, parseState, resetToCatalog, saveState } from "./lib/state.ts";
 import type { AppState, Category, OverlayList, Timer } from "./lib/types.ts";
 import { formatClock } from "./lib/format.ts";
 import { ordered, present, type RowView } from "./lib/view.ts";
@@ -66,12 +66,16 @@ const editor = dialog
 document.querySelector("#win-close")?.addEventListener("click", () => {
   void getCurrentWindow().close();
 });
-document.querySelector("#update-check")?.addEventListener("click", () => {
-  void checkForUpdate();
-});
 document.querySelector("#update-install")?.addEventListener("click", () => {
   void installUpdate();
 });
+document.querySelector("#update-now")?.addEventListener("click", () => {
+  void installUpdate();
+});
+document.querySelector("#update-later")?.addEventListener("click", () => {
+  document.querySelector<HTMLDialogElement>("#update-dialog")?.close();
+});
+
 
 document.querySelector("#nav-timers")?.addEventListener("click", () => showPage("timers"));
 document.querySelector("#nav-settings")?.addEventListener("click", () => showPage("settings"));
@@ -273,7 +277,7 @@ function replace(timer: Timer): void {
 }
 
 function commit(): void {
-  saveState(state);
+  persist();
   void emit("timers-state", state);
   void applyChrome();
   renderList();
@@ -471,7 +475,7 @@ async function boot(): Promise<void> {
   });
   await listen<boolean>("overlay-visibility", (event) => {
     state.settings.overlayVisible = event.payload;
-    saveState(state);
+    persist();
     syncOverlayButton();
     syncSettings();
     void emit("timers-state", state);
@@ -479,13 +483,13 @@ async function boot(): Promise<void> {
   await listen<{ x: number; y: number }>("overlay-moved", (event) => {
     state.settings.overlayX = event.payload.x;
     state.settings.overlayY = event.payload.y;
-    saveState(state);
+    persist();
   });
   await listen<{ width: number; height: number }>("overlay-resized", (event) => {
     if (event.payload.width < 200 || event.payload.height < 120) return;
     state.settings.overlayWidth = event.payload.width;
     state.settings.overlayHeight = event.payload.height;
-    saveState(state);
+    persist();
   });
   await listen("overlay-compact", () => {
     state.settings.overlayList = nextList(state.settings.overlayList);
@@ -517,6 +521,7 @@ async function boot(): Promise<void> {
   }
   unlockSound();
   document.addEventListener("pointerdown", unlockSound);
+  await restoreState();
   void checkForUpdate();
   void refreshCatalog(true);
   void loadMonitors();
@@ -580,6 +585,9 @@ async function checkForUpdate(): Promise<void> {
   }
   setUpdateStatus(`Version ${pendingUpdate.version} is available.`);
   document.querySelector("#update-install")?.removeAttribute("hidden");
+  const text = document.querySelector("#update-dialog-text");
+  if (text) text.textContent = `Version ${pendingUpdate.version} is ready. It installs and restarts.`;
+  document.querySelector<HTMLDialogElement>("#update-dialog")?.showModal();
 }
 
 async function installUpdate(): Promise<void> {
@@ -626,10 +634,27 @@ async function checkAlerts(now: DateTime): Promise<void> {
     const at = DateTime.fromISO(key.slice(key.indexOf("@") + 1).split("#")[0] ?? "");
     return at.isValid && at.toMillis() >= cutoff;
   });
-  saveState(state);
+  persist();
 }
 
 let monitors: { name: string; x: number; y: number }[] = [];
+
+function persist(): void {
+  saveState(state);
+  void invoke("save_state_file", { state: JSON.stringify(state) });
+}
+
+async function restoreState(): Promise<void> {
+  try {
+    const raw = await invoke<string | null>("load_state_file");
+    state = mergeStores(state, raw ? parseState(raw) : null);
+  } catch {
+    // The window store still has this session.
+  }
+  persist();
+  void emit("timers-state", state);
+  renderList();
+}
 
 function nextList(current: OverlayList): OverlayList {
   if (current === "all") return "next3";

@@ -4,6 +4,7 @@ import { DateTime } from "luxon";
 import { catalog } from "../src/lib/catalog.ts";
 import { dueAlerts, inQuietHours, markSeen, upcomingStarts } from "../src/lib/schedule.ts";
 import { exportTimers, importTimers } from "../src/lib/share.ts";
+import { freshState, mergeStores } from "../src/lib/state.ts";
 import type { Timer } from "../src/lib/types.ts";
 
 const zone = "Europe/Berlin";
@@ -64,4 +65,20 @@ test("import adds a custom timer and leaves catalog timers alone", () => {
   assert.equal(result.timers.filter((timer) => timer.name === "Gartua").length, 1);
   assert.equal(result.timers.find((timer) => timer.id === "shugo-festival")?.schedule.kind, "hourly");
   assert.match(result.note, /1 new/);
+});
+
+test("a file store keeps custom timers when the window store was wiped", () => {
+  const local = freshState();
+  const saved = freshState();
+  saved.timers.push({
+    ...local.timers[0],
+    id: "field-gartua",
+    name: "Immortal Gartua",
+    schedule: { kind: "rolling" },
+    seeded: false,
+    customized: true,
+    nextAt: "2026-10-15T00:34:00.000Z",
+  });
+  const merged = mergeStores(local, saved);
+  assert.equal(merged.timers.some((timer) => timer.id === "field-gartua"), true);
 });

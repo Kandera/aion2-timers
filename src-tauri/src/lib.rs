@@ -64,6 +64,25 @@ fn place_overlay(
     Ok(())
 }
 
+fn state_path(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
+    let dir = app.path().app_data_dir().map_err(|error| error.to_string())?;
+    std::fs::create_dir_all(&dir).map_err(|error| error.to_string())?;
+    Ok(dir.join("state.json"))
+}
+
+#[tauri::command]
+fn load_state_file(app: tauri::AppHandle) -> Result<Option<String>, String> {
+    match std::fs::read_to_string(state_path(&app)?) {
+        Ok(text) => Ok(Some(text)),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        Err(error) => Err(error.to_string()),
+    }
+}
+
+#[tauri::command]
+fn save_state_file(app: tauri::AppHandle, state: String) -> Result<(), String> {
+    std::fs::write(state_path(&app)?, state).map_err(|error| error.to_string())
+}
 fn show_main(app: &tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.show();
@@ -137,7 +156,9 @@ pub fn run() {
             set_hotkey,
             set_overlay_visible,
             set_overlay_chrome,
-            place_overlay
+            place_overlay,
+            load_state_file,
+            save_state_file
         ])
         .setup(|app| {
             setup_tray(app)?;
