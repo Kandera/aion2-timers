@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aion 2 Timers Overlay</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <script type="module" src="/src/overlay.ts"></script>
+  </head>
+  <body data-surface="overlay">
+    <section class="panel" id="panel">
+      <header class="panel-head">
+        <div class="drag" data-tauri-drag-region>
+          <p class="panel-kicker" data-tauri-drag-region>Aion 2</p>
+          <h1 data-tauri-drag-region>Timers</h1>
+        </div>
+        <div class="panel-clocks" data-tauri-drag-region>
+          <div data-tauri-drag-region>
+            <span>ST</span>
+            <strong id="clock-st">--:--:--</strong>
+          </div>
+          <div data-tauri-drag-region>
+            <span>LT</span>
+            <strong id="clock-lt">--:--:--</strong>
+          </div>
+        </div>
+        <button type="button" id="compact" class="ghost">Next 3</button>
+      </header>
+      <div id="rows" class="panel-rows"></div>
+      <p id="overlay-note" class="panel-note" hidden>Click-through is on. Turn it off to drag or mark a kill.</p>
+    </section>
+  </body>
+</html>

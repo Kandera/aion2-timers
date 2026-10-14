@@ -1,0 +1,74 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Aion 2 Timers",
+  "identifier": "app.aion2timers.desktop",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "main",
+        "title": "Aion 2 Timers",
+        "url": "index.html",
+        "width": 1040,
+        "height": 720,
+        "minWidth": 860,
+        "minHeight": 560,
+        "decorations": false,
+        "shadow": true
+      },
+      {
+        "label": "overlay",
+        "title": "Aion 2 Timers Overlay",
+        "url": "overlay.html",
+        "width": 340,
+        "height": 480,
+        "minWidth": 260,
+        "minHeight": 160,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "shadow": false,
+        "resizable": true,
+        "focus": false,
+        "visible": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "createUpdaterArtifacts": true,
+    "nsis": {
+      "installMode": "currentUser"
+    },
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  },
+  "plugins": {
+    "updater": {
+      "requireSignedVersion": true,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDE3N0NBNkZCNDkwQUZGNzkKUldSNS93cEorNlo4RjBRdU15YUVGWm9wRGZtTGQzUHgzUFc2MnkyVndQRzZPdi94QkRqNTY0ZG8K",
+      "endpoints": [
+        "https://github.com/Kandera/aion2-timers/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  }
+}
