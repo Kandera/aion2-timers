@@ -24,7 +24,7 @@
           <button type="button" id="nav-timers" aria-current="page">Timers</button>
           <button type="button" id="nav-settings">Settings</button>
         </nav>
-        <p class="rail-note">Does not read the game client.<br />V:0.1.1 by Kandera</p>
+        <p class="rail-note">Does not read the game client.<br />V:0.1.2 by Kandera</p>
       </aside>
       <section class="stage">
         <header class="top" data-tauri-drag-region>
@@ -168,8 +168,13 @@
           </section>
         </form>
           <article id="changelog-page" class="sheet" hidden>
+            <h2>0.1.2</h2>
+            <p>Ships in the 0.1.2 installer.</p>
+            <ul>
+              <li>Timers, pins, and settings are kept in an app data file. An update does not clear them.</li>
+              <li>An available update opens a dialog. Install and restart, or later.</li>
+            </ul>
             <h2>0.1.1</h2>
-            <p>Ships in the 0.1.1 installer.</p>
             <ul>
               <li>Overlay cycles All, Next 3, and Soon. It fades when nothing is soon.</li>
               <li>Pick the overlay monitor. The game window is not read.</li>

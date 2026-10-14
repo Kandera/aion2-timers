@@ -2,13 +2,20 @@
 
 Desktop timers for Aion 2 events, bosses, and your own field bosses. The overlay follows what you pin in the editor.
 
-It does not read the game client, packets, or memory. V:0.1.1 by Kandera. Licensed under MIT.
+It does not read the game client, packets, or memory. V:0.1.2 by Kandera. Licensed under MIT.
 
 ## Install
 
 Download the Windows setup from the [latest release](https://github.com/Kandera/aion2-timers/releases/latest). It installs for the current user, no admin prompt.
 
-Settings → Updates checks GitHub for a newer signed setup, then installs it and restarts.
+Settings → Updates checks GitHub for a newer signed setup. When one is available, the app shows a dialog, then installs it and restarts.
+
+Timers, pins, and settings are stored in an app data file, so an update does not clear them.
+
+## 0.1.2
+
+- Timers, pins, and settings stay in an app data file across updates.
+- An available update opens a dialog. Install and restart, or later.
 
 ## Use
 
