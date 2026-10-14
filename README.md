@@ -16,7 +16,7 @@ Field boss times are not pulled from aion2timers.com. That site blocks automated
 
 Not in the 0.1.0 installer yet.
 
-- Paste spawn reads `Gartua 00:34` or `Immortal Gartua Spawns at 6:43 PM`. The clock is the server zone. A field boss keeps its interval.
+- Paste spawn reads `Gartua 00:34`, `Immortal Gartua Spawns at 6:43 PM`, or a copied aion2timers row. Loot and the Korean name are ignored. The clock after Spawns in is used. A field boss keeps its interval.
 - Export and Import share custom timers as JSON. Catalog timers stay put.
 - The overlay cycles All, Next 3, and Soon. It fades when nothing is soon. Click-through stays visible.
 - Pick the overlay monitor in Settings. The app does not read the game window.

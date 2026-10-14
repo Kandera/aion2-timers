@@ -45,6 +45,16 @@ test("a later clock time stays today and keeps the interval", () => {
   assert.match(result.notes[0] ?? "", /Set Immortal Gartua/);
 });
 
+test("a copied aion2timers row keeps the English name and the clock", () => {
+  const text = `Immortal Gartua불멸의 가르투아
+Unique · iLv 70Collections: 13 items
+Loot (15)
+   Isle of Immortality   Dead   Spawns in 06:21:08 · 00:34`;
+  const [hit] = parseSpawns(text, now, zone);
+  assert.equal(hit?.name, "Immortal Gartua");
+  assert.equal(DateTime.fromISO(hit?.nextAt ?? "").setZone(zone).toFormat("HH:mm"), "00:34");
+});
+
 test("an unknown name becomes a field boss and a clock timer is left alone", () => {
   const hits = parseSpawns("Lagta 00:38\nShugo Festival 15:00", now, zone);
   const shugo = catalog().find((timer) => timer.id === "shugo-festival");

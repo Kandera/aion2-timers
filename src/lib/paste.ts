@@ -10,11 +10,26 @@ export type SpawnHit = {
 const CLOCK = /\b(\d{1,2}):(\d{2})\s*(am|pm)?\b/i;
 const RELATIVE_HOUR = /\bin\s+(\d+)\s*h(?:ours?)?(?:\s+(\d+)\s*m(?:in(?:utes?)?)?)?/i;
 const RELATIVE_MINUTE = /\bin\s+(\d+)\s*m(?:in(?:utes?)?)?/i;
+const SPAWNS_IN = /spawns in\s+(\d{1,2}):(\d{2}):(\d{2})(?:\s*[·•]\s*(\d{1,2}):(\d{2}))?/i;
 
 export function parseSpawns(text: string, now: DateTime, zone: string): SpawnHit[] {
+  const lines = text.split(/\r?\n/);
   const hits: SpawnHit[] = [];
-  for (const line of text.split(/\r?\n/)) {
-    const hit = parseLine(line, now, zone);
+  const consumed = new Set<number>();
+  for (let index = 0; index < lines.length; index += 1) {
+    const spawn = lines[index]?.match(SPAWNS_IN);
+    if (!spawn) continue;
+    const name = nameBefore(lines, index);
+    const nextAt = spawn[4] != null
+      ? clockAt(now, zone, Number(spawn[4]), Number(spawn[5]))
+      : now.plus({ hours: Number(spawn[1]), minutes: Number(spawn[2]), seconds: Number(spawn[3]) }).toUTC().toISO();
+    if (!name || !nextAt) continue;
+    hits.push({ name, nextAt });
+    consumed.add(index);
+  }
+  for (let index = 0; index < lines.length; index += 1) {
+    if (consumed.has(index) || SPAWNS_IN.test(lines[index] ?? "")) continue;
+    const hit = parseLine(lines[index] ?? "", now, zone);
     if (hit) hits.push(hit);
   }
   return hits;
@@ -51,6 +66,30 @@ function parseLine(line: string, now: DateTime, zone: string): SpawnHit | null {
   const nextAt = clock ? nextClock(now, zone, clock) : nextRelative(now, relative);
   if (!nextAt) return null;
   return { name, nextAt };
+}
+
+function clockAt(now: DateTime, zone: string, hour: number, minute: number): string | null {
+  return nextClock(now, zone, ["", String(hour), String(minute)]);
+}
+
+function nameBefore(lines: string[], index: number): string | null {
+  for (let cursor = index - 1; cursor >= 0; cursor -= 1) {
+    const name = bossName(lines[cursor] ?? "");
+    if (name) return name;
+  }
+  return null;
+}
+
+function bossName(line: string): string | null {
+  const latin = line
+    .replace(/[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF\u4E00-\u9FFF]+/g, " ")
+    .replace(/\d+/g, " ")
+    .replace(/\b(?:unique|i?lv|collections?|items?|loot|dead|alive)\b/gi, " ")
+    .replace(/[·•:|()]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!latin || /^isle\b/i.test(latin) || latin.length < 3) return null;
+  return latin;
 }
 
 function nextClock(now: DateTime, zone: string, match: RegExpMatchArray): string | null {
