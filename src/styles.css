@@ -415,18 +415,59 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.62); }
 .overlay-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
   align-items: center;
-  padding: 8px 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  gap: 12px;
+  padding: 7px 12px 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 .overlay-row[data-category="boss"] { box-shadow: inset 3px 0 0 var(--boss); }
 .overlay-row[data-category="event"] { box-shadow: inset 3px 0 0 var(--event); }
 .overlay-row[data-category="pvp"] { box-shadow: inset 3px 0 0 var(--pvp); }
 .overlay-row[data-category="system"] { box-shadow: inset 3px 0 0 var(--system); }
-.overlay-row h2 { margin: 0; font-size: 1em; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.overlay-row p { margin: 0; color: var(--muted); font-size: 0.85em; }
-.overlay-row .count { font-size: 1.15em; }
+.overlay-copy { min-width: 0; }
+.overlay-copy strong {
+  display: block;
+  font-size: 0.95em;
+  font-weight: 560;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.overlay-copy p {
+  margin: 1px 0 0;
+  color: var(--faint);
+  font-size: 0.68em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.overlay-side {
+  display: grid;
+  justify-items: end;
+  gap: 1px;
+}
+.overlay-row .data-count {
+  font-family: "IBM Plex Mono", monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  font-size: 0.95em;
+  line-height: 1.2;
+  min-width: 5.4em;
+  text-align: right;
+}
+.overlay-row .data-count[data-phase="live"],
+.overlay-row .data-count[data-phase="entry"] { color: var(--live); }
+.overlay-row .data-count[data-phase="overdue"] { color: var(--overdue); }
+.overlay-act {
+  border: 0;
+  background: transparent;
+  color: var(--faint);
+  padding: 0;
+  font-size: 0.68em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.overlay-act:hover { color: var(--accent); }
 .panel-note { margin: 0; padding: 8px 12px 10px; color: var(--faint); font-size: 0.85em; }
 
 @media (prefers-reduced-motion: reduce) {

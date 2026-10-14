@@ -81,17 +81,20 @@ function render(): void {
         const view = present(timer, now, state.settings.timeZone);
         const detail = view.phase === "upcoming" ? view.when : labelFor(view.phase);
         const kill = view.canKill
-          ? `<button type="button" class="kill" data-kill="${esc(view.id)}" aria-label="Killed ${esc(view.name)}">Killed</button>`
+          ? `<button type="button" class="overlay-act" data-kill="${esc(view.id)}" aria-label="Killed ${esc(view.name)}">Killed</button>`
           : "";
         const seen = view.canSee
-          ? `<button type="button" class="kill" data-seen="${esc(view.id)}" aria-label="Seen ${esc(view.name)}">Seen</button>`
+          ? `<button type="button" class="overlay-act" data-seen="${esc(view.id)}" aria-label="Seen ${esc(view.name)}">Seen</button>`
           : "";
         return `<article class="overlay-row" data-id="${esc(view.id)}" data-category="${esc(view.category)}" data-phase="${esc(view.phase)}">
-          <div class="data-category">${esc(view.category)}</div>
-          <strong>${esc(view.name)}</strong>
-          <div class="data-phase" data-detail data-phase="${esc(view.phase)}">${esc(detail)}</div>
-          <div class="data-count" data-count data-phase="${esc(view.phase)}">${esc(view.countdown)}</div>
-          ${kill}${seen}
+          <div class="overlay-copy">
+            <strong>${esc(view.name)}</strong>
+            <p><span>${esc(view.category)}</span> · <span data-detail>${esc(detail)}</span></p>
+          </div>
+          <div class="overlay-side">
+            <div class="data-count" data-count data-phase="${esc(view.phase)}">${esc(view.countdown)}</div>
+            ${kill}${seen}
+          </div>
         </article>`;
       })
       .join("") + (notes.length > 0 ? `<p class="panel-note">${esc(notes.join(" "))}</p>` : "");
