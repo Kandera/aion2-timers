@@ -2,7 +2,8 @@
 name = "aion2-timers"
 version = "0.1.0"
 description = "Desktop timers and overlay for Aion 2 events. Does not read the game client."
-authors = ["omp"]
+license = "MIT"
+authors = ["Kandera"]
 edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

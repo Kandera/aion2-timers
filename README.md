@@ -2,7 +2,7 @@
 
 Desktop timers for Aion 2 events, bosses, and your own field bosses. The overlay follows what you pin in the editor.
 
-It does not read the game client, packets, or memory. V:0.1 by Kandera.
+It does not read the game client, packets, or memory. V:0.1 by Kandera. Licensed under MIT.
 
 ## Install
 
