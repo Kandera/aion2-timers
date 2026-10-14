@@ -9,7 +9,7 @@
   </head>
   <body data-surface="app">
     <div class="shell">
-      <aside class="rail">
+      <aside class="rail" data-tauri-drag-region>
         <div class="brand">
           <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
             <circle cx="16" cy="16" r="11" fill="none" stroke="currentColor" stroke-width="1.6" />
@@ -27,10 +27,10 @@
         <p class="rail-note">Does not read the game client.<br />V:0.1 by Kandera</p>
       </aside>
       <section class="stage">
-        <header class="top">
+        <header class="top" data-tauri-drag-region>
           <div class="top-drag" data-tauri-drag-region>
-            <p class="eyebrow" id="page-kicker">Server time</p>
-            <h1 id="page-title">Timers</h1>
+            <p class="eyebrow" id="page-kicker" data-tauri-drag-region>Server time</p>
+            <h1 id="page-title" data-tauri-drag-region>Timers</h1>
           </div>
           <div class="top-side">
             <div class="clocks" aria-label="Clocks" data-tauri-drag-region>
@@ -62,8 +62,14 @@
           <p id="clock-warning" class="hint"></p>
           <div id="list" class="list"></div>
         </div>
-        <form id="settings-page" class="settings" hidden>
-          <section>
+        <div id="settings-page" hidden>
+          <div class="tabs" role="tablist" aria-label="Settings">
+            <button type="button" id="tab-settings" aria-selected="true">Settings</button>
+            <button type="button" id="tab-changelog">Changelog</button>
+            <button type="button" id="tab-help">Help</button>
+          </div>
+          <form id="settings-form" class="settings">
+            <section>
             <h2>Clock</h2>
             <label class="field">Server zone
               <input id="zone" name="zone" list="zones" autocomplete="off" spellcheck="false" />
@@ -161,6 +167,35 @@
             <p class="hint">Drag the overlay header to move it. Click-through blocks that, and blocks Killed.</p>
           </section>
         </form>
+          <article id="changelog-page" class="sheet" hidden>
+            <h2>Since 0.1.0</h2>
+            <p>Not in the 0.1.0 installer yet.</p>
+            <ul>
+              <li>Overlay cycles All, Next 3, and Soon. It fades when nothing is soon.</li>
+              <li>Pick the overlay monitor. The game window is not read.</li>
+              <li>Tone per timer. A second alert fires when it starts.</li>
+              <li>Quiet hours mute the sound. The row stays.</li>
+              <li>Seen skips one clock time. Killed still rolls an interval.</li>
+              <li>Paste spawn, Export, and Import.</li>
+              <li>Each row shows the next three times.</li>
+              <li>Maintenance opens a one-time end timer.</li>
+              <li>Catalog refresh pulls schedule fixes without a new setup.</li>
+            </ul>
+          </article>
+          <article id="help-page" class="sheet" hidden>
+            <h2>Paste spawn</h2>
+            <p>Copy a line, then press Paste spawn. The clock is the server zone.</p>
+            <ul>
+              <li><code>Gartua 00:34</code></li>
+              <li><code>Immortal Gartua Spawns at 6:43 PM</code></li>
+            </ul>
+            <p>A later time is today. An earlier time is tomorrow. A matching field boss keeps its interval. An unknown name is added. A clock timer is left alone.</p>
+            <h2>Export</h2>
+            <p>Export writes your custom timers to a JSON file. Catalog timers are not included.</p>
+            <h2>Import</h2>
+            <p>Import reads that file. A matching name is updated. A new name is added. Catalog timers stay as they are.</p>
+          </article>
+        </div>
       </section>
     </div>
     <dialog id="editor"></dialog>

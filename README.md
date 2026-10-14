@@ -10,15 +10,21 @@ Download the Windows setup from the [latest release](https://github.com/Kandera/
 
 Settings → Updates checks GitHub for a newer signed setup, then installs it and restarts.
 
-Field boss times are not pulled from aion2timers.com. That site blocks automated fetches. Paste a line like `Gartua 00:34` onto a field boss. The interval stays. The clock is the server zone.
+Field boss times are not pulled from aion2timers.com. That site blocks automated fetches.
 
-The overlay shows pinned timers due within the next hours. Live and overdue stay. Change the window under Settings, Overlay.
+## Added since 0.1.0
 
-Settings, Catalog pulls `catalog.json` from this repo. A schedule fix lands without a new setup. Pins, alarms, notes, and your own timers stay.
+Not in the 0.1.0 installer yet.
 
-The overlay button cycles All, Next 3, and Soon. It fades when nothing is due soon, and comes back when the pointer is over it. Click-through keeps it visible, because a hover cannot reach it.
+- Paste spawn reads `Gartua 00:34` or `Immortal Gartua Spawns at 6:43 PM`. The clock is the server zone. A field boss keeps its interval.
+- Export and Import share custom timers as JSON. Catalog timers stay put.
+- The overlay cycles All, Next 3, and Soon. It fades when nothing is soon. Click-through stays visible.
+- Pick the overlay monitor in Settings. The app does not read the game window.
+- Each timer can have its own tone, and a second alert when it starts. Quiet hours mute the sound. The row stays.
+- Seen skips one clock time. Killed still rolls an interval.
+- Each row shows the next three times. Maintenance opens a one-time end timer.
+- Settings, Catalog pulls `catalog.json` from this repo without a new setup.
 
-Export and Import share custom timers as JSON. Maintenance opens a one-time end timer. Seen skips the current clock time without rolling an interval.
 
 The signing private key is not in this repo. `node_modules` and `src-tauri/target` are not either.
 

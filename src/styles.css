@@ -30,7 +30,10 @@
 * { box-sizing: border-box; }
 
 html, body { height: 100%; margin: 0; }
-body[data-surface="app"] { background: var(--bg); overflow: hidden; color-scheme: dark; }
+body[data-surface="app"] { background: var(--bg); overflow: hidden; color-scheme: dark; user-select: none; }
+body[data-surface="app"] input,
+body[data-surface="app"] textarea,
+body[data-surface="app"] .sheet { user-select: text; }
 body[data-surface="overlay"] {
   background: transparent;
   overflow: hidden;
@@ -151,7 +154,7 @@ button { cursor: pointer; }
 
 .nav { display: grid; gap: 4px; }
 
-.nav button, .ghost, .toolbar-actions button, .editor-actions button, .hotkey-row button {
+.nav button, .ghost, .toolbar-actions button, .editor-actions button, .hotkey-row button, .tabs button {
   border: 1px solid transparent;
   background: transparent;
   border-radius: 8px;
@@ -225,7 +228,21 @@ h2 { margin: 0; font-size: 15px; font-weight: 600; }
   overflow: hidden;
 }
 
-#settings-page { flex: 1; min-height: 0; }
+#settings-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.tabs { display: flex; gap: 4px; padding: 0 28px 8px; }
+.tabs button[aria-selected="true"] { background: var(--accent-dim); color: var(--accent); }
+.settings, .sheet { flex: 1; min-height: 0; overflow: auto; }
+.sheet { padding: 4px 28px 32px; color: var(--muted); }
+.sheet h2 { margin: 18px 0 6px; color: var(--text); font-size: 16px; }
+.sheet p, .sheet li { margin: 0 0 8px; }
+.sheet ul { margin: 0 0 12px; padding-left: 18px; }
+.sheet code { color: var(--text); font-family: "IBM Plex Mono", monospace; font-size: 0.92em; }
 
 [hidden] { display: none !important; }
 

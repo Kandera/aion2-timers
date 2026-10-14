@@ -120,6 +120,8 @@ list?.addEventListener("click", (event) => {
 });
 
 bindSettings();
+bindSettingsTabs();
+bindWindowDrag();
 renderFilters();
 renderList();
 syncOverlayButton();
@@ -136,6 +138,35 @@ function showPage(page: "timers" | "settings"): void {
   const kicker = document.querySelector("#page-kicker");
   if (title) title.textContent = page === "timers" ? "Timers" : "Settings";
   if (kicker) kicker.textContent = page === "timers" ? "Server time" : "This PC";
+}
+
+function bindSettingsTabs(): void {
+  const tabs = [
+    ["tab-settings", "settings-form"],
+    ["tab-changelog", "changelog-page"],
+    ["tab-help", "help-page"],
+  ] as const;
+  for (const [tabId] of tabs) {
+    document.querySelector(`#${tabId}`)?.addEventListener("click", () => {
+      for (const [id, panelId] of tabs) {
+        document.querySelector(`#${id}`)?.setAttribute("aria-selected", String(id === tabId));
+        document.querySelector(`#${panelId}`)?.toggleAttribute("hidden", id !== tabId);
+      }
+    });
+  }
+}
+
+function bindWindowDrag(): void {
+  for (const zone of [document.querySelector(".rail"), document.querySelector(".top")]) {
+    zone?.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0) return;
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      if (target.closest("button, input, select, textarea, a")) return;
+      event.preventDefault();
+      void getCurrentWindow().startDragging();
+    });
+  }
 }
 
 function renderFilters(): void {
