@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>Aion 2 Timers</title>
+  <rect width="64" height="64" rx="14" fill="#0b0c0f"/>
+  <circle cx="32" cy="34" r="16" fill="none" stroke="#7dd8d8" stroke-width="3"/>
+  <path d="M32 24v11l7 4" fill="none" stroke="#e8edf4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M22 16h20" fill="none" stroke="#7dd8d8" stroke-width="3" stroke-linecap="round"/>
+</svg>

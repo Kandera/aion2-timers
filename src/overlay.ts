@@ -2,11 +2,11 @@ import { emit, listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { DateTime } from "luxon";
 import { formatClock, formatCountdown, formatWhen } from "./lib/format.ts";
+import { isOverlaySoon, listLabel, selectOverlay } from "./lib/edge.ts";
 import { esc } from "./lib/html.ts";
-import { evaluate, type Occurrence } from "./lib/schedule.ts";
+import { evaluate } from "./lib/schedule.ts";
 import { loadState } from "./lib/state.ts";
 import type { AppState, Timer } from "./lib/types.ts";
-import { rankValue, shownTimers } from "./lib/view.ts";
 
 let state: AppState = loadState();
 let listKey = "";
@@ -54,36 +54,8 @@ function applyChrome(): void {
 }
 
 
-function overlayMeta(now: DateTime): { shown: { timer: Timer; occurrence: Occurrence }[]; later: number; compactHidden: number } {
-  const zone = state.settings.timeZone;
-  const limit = Math.min(48, Math.max(1, state.settings.overlayHours)) * 3_600_000;
-  const ranked = shownTimers(state.timers, state.settings.fieldZone)
-    .filter((timer) => timer.overlay)
-    .map((timer) => ({ timer, occurrence: evaluate(timer, now, zone) }))
-    .sort((left, right) => rankValue(left.occurrence) - rankValue(right.occurrence) || left.timer.name.localeCompare(right.timer.name));
-  const due = ranked.filter((item) => onOverlay(item.occurrence, limit));
-  const listed = state.settings.overlayList === "soon" ? due.filter((item) => soon(item.occurrence)) : due;
-  const shown = state.settings.overlayList === "next3" ? listed.slice(0, 3) : listed;
-  return {
-    shown,
-    later: ranked.length - listed.length,
-    compactHidden: state.settings.overlayList === "next3" ? Math.max(0, listed.length - 3) : 0,
-  };
-}
-
-function onOverlay(occurrence: Occurrence, limit: number): boolean {
-  if (occurrence.phase === "unset") return false;
-  if (occurrence.phase !== "upcoming") return true;
-  return occurrence.remainingMs != null && occurrence.remainingMs <= limit;
-}
-
-function soon(occurrence: Occurrence): boolean {
-  return (
-    occurrence.phase === "live" ||
-    occurrence.phase === "entry" ||
-    occurrence.phase === "overdue" ||
-    (occurrence.phase === "upcoming" && occurrence.remainingMs != null && occurrence.remainingMs <= 15 * 60_000)
-  );
+function overlayMeta(now: DateTime) {
+  return selectOverlay(state, now);
 }
 
 function render(): void {
@@ -168,11 +140,6 @@ function labelFor(phase: string): string {
   return "";
 }
 
-function listLabel(mode: string): string {
-  if (mode === "next3") return "Next 3";
-  if (mode === "soon") return "Soon";
-  return "All";
-}
 
 function idleOverlay(): boolean {
   const now = DateTime.now();
@@ -180,5 +147,5 @@ function idleOverlay(): boolean {
 }
 
 function isSoon(timer: Timer, now: DateTime): boolean {
-  return soon(evaluate(timer, now, state.settings.timeZone));
+  return isOverlaySoon(evaluate(timer, now, state.settings.timeZone));
 }

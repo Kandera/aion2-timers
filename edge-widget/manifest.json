@@ -1,0 +1,14 @@
+{
+  "author": "Kandera",
+  "id": "app.aion2timers.edge",
+  "name": "Aion 2 Timers",
+  "description": "Pinned Aion 2 timers from the desktop app. Same list, Killed, and Seen as the overlay.",
+  "version": "0.1.5",
+  "preview_icon": "resources/icon.svg",
+  "min_framework_version": "1.0.0",
+  "min_app_version": "5.47",
+  "os": [{ "platform": "windows" }],
+  "supported_devices": [{ "type": "dashboard_lcd" }],
+  "interactive": true,
+  "permissions": [{ "type": "url", "domain": "127.0.0.1", "port": 47321 }]
+}

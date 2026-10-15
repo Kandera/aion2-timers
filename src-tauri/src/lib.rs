@@ -4,6 +4,7 @@ use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{Emitter, Manager};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
+mod edge;
 
 // Schedules are typed in by the user or shipped in the catalog.
 // This process must not inspect, hook, or capture the game client.
@@ -164,6 +165,7 @@ pub fn run() {
         ])
         .setup(|app| {
             setup_tray(app)?;
+            edge::start(app);
             Ok(())
         })
         .on_window_event(|window, event| match event {

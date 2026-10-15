@@ -1,13 +1,13 @@
 {
   "name": "aion2-timers",
   "private": true,
-  "version": "0.1.4",
+  "version": "0.1.5",
   "type": "module",
   "license": "MIT",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "test": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test tests/schedule.test.ts tests/paste.test.ts tests/list.test.ts tests/field-bosses.test.ts",
+    "test": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test tests/schedule.test.ts tests/paste.test.ts tests/list.test.ts tests/field-bosses.test.ts tests/edge.test.ts",
     "tauri": "tauri"
   },
   "dependencies": {

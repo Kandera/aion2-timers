@@ -26,6 +26,10 @@ jobs:
         with:
           tagName: v__VERSION__
           releaseName: Aion 2 Timers v__VERSION__
-          releaseBody: Install the Windows setup from the assets.
+          releaseBody: Install the Windows setup from the assets. Import aion-2-timers.icuewidget in iCUE for the XENEON EDGE.
           releaseDraft: false
           prerelease: false
+      - run: npx --yes icuewidget-cli package edge-widget
+      - run: gh release upload ${{ github.ref_name }} aion-2-timers.icuewidget --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

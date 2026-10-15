@@ -2,7 +2,7 @@
 
 Desktop timers for Aion 2 events, bosses, and your own field bosses. The overlay follows what you pin in the editor.
 
-It does not read the game client, packets, or memory. V:0.1.4 by Kandera. Licensed under MIT.
+It does not read the game client, packets, or memory. V:0.1.5 by Kandera. Licensed under MIT.
 
 ## Install
 
@@ -11,6 +11,11 @@ Download the Windows setup from the [latest release](https://github.com/Kandera/
 Settings → Updates checks GitHub for a newer signed setup. When one is available, the app shows a dialog, then installs it and restarts.
 
 Timers, pins, and settings are stored in an app data file, so an update does not clear them.
+
+## 0.1.5
+
+- XENEON EDGE widget uses the same pins as the overlay. Killed, Seen, and All, Next 3, Soon write back.
+- Import aion-2-timers.icuewidget from the release. Medium replaces the weather tile. Large spans the two right tiles.
 
 ## 0.1.4
 
@@ -45,6 +50,20 @@ Each row shows the next three times.
 Settings → Catalog pulls `catalog.json` from this repo, so a schedule fix lands without a new setup. Pins, alarms, notes, and your own timers stay.
 
 Close the editor window to keep the overlay and alarms in the tray. Quit from the tray icon.
+
+## XENEON EDGE
+
+`edge-widget/` is an iCUE widget for the CORSAIR XENEON EDGE. It shows the same pinned timers as the overlay. Killed, Seen, and All / Next 3 / Soon write back to the app.
+
+The app listens on `127.0.0.1:47321` while it is running, including from the tray. iCUE asks to allow that address on import. Approve it. A website cannot read the list: the bridge rejects public web origins.
+
+Place the widget as Medium to replace the weather tile, or Large to span the two right tiles. iCUE 5.47 or newer.
+
+Import aion-2-timers.icuewidget from the release. In iCUE, Widgets, +. Regenerate it with:
+
+```
+npx --yes icuewidget-cli package edge-widget
+```
 
 ## Develop
 

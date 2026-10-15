@@ -17,6 +17,7 @@ import { loadState, mergeCatalog, mergeStores, parseState, resetToCatalog, saveS
 import type { AppState, OverlayList, Timer } from "./lib/types.ts";
 import { formatClock, formatCountdown, formatWhen } from "./lib/format.ts";
 import { ordered, passesFilter, present, rankValue, shownTimers, type RowView } from "./lib/view.ts";
+import { edgeSnapshot } from "./lib/edge.ts";
 
 type Filter = "all" | "event" | "world" | "field" | "pvp" | "system";
 
@@ -270,6 +271,7 @@ function tick(): void {
   if (!settingsOpen) paintList(ranked, now, zone);
   fireAlerts(ranked, now, zone);
   maybeRefreshFieldBosses(now);
+  publishEdge(now);
 }
 
 function paintList(ranked: { timer: Timer; occurrence: Occurrence }[], now: DateTime, zone: string): void {
@@ -325,6 +327,7 @@ function replace(timer: Timer): void {
 function commit(): void {
   persist();
   void emit("timers-state", state);
+  publishEdge();
   void applyChrome();
   renderList();
   syncOverlayButton();
@@ -797,6 +800,7 @@ async function restoreState(): Promise<void> {
   }
   persist();
   void emit("timers-state", state);
+  publishEdge();
   renderList();
 }
 
@@ -804,6 +808,10 @@ function nextList(current: OverlayList): OverlayList {
   if (current === "all") return "next3";
   if (current === "next3") return "soon";
   return "all";
+}
+
+function publishEdge(now = DateTime.now()): void {
+  void emit("edge-snapshot", edgeSnapshot(state, now)).catch(() => {});
 }
 
 function isOverlayList(value: string): value is OverlayList {

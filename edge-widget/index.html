@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Aion 2 Timers</title>
+    <link rel="icon" type="image/svg+xml" href="resources/icon.svg" />
+    <link rel="stylesheet" href="styles/style.css" />
+    <meta name="x-icue-property" content="textColor" data-label="tr('Text')" data-type="color" data-default="'#E8EDF4'" />
+    <meta name="x-icue-property" content="accentColor" data-label="tr('Accent')" data-type="color" data-default="'#7DD8D8'" />
+    <meta name="x-icue-property" content="backgroundColor" data-label="tr('Background')" data-type="color" data-default="'#000000'" />
+    <script id="x-icue-groups" type="application/json">
+      [
+        {
+          "title": "tr('Appearance')",
+          "info": "tr('Edge help')",
+          "properties": ["textColor", "accentColor", "backgroundColor"]
+        }
+      ]
+    </script>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="bar">
+        <div class="brand">
+          <p class="kicker">Aion 2</p>
+          <strong id="clock" class="clock">--:--:--</strong>
+        </div>
+        <button type="button" id="mode" class="mode">All</button>
+      </header>
+      <p id="status" class="status" hidden="hidden"></p>
+      <section id="board" class="board" hidden="hidden">
+        <article id="hero" class="hero"></article>
+        <div class="list-wrap">
+          <div id="rows" class="rows"></div>
+          <p id="note" class="note"></p>
+        </div>
+      </section>
+      <section id="empty" class="empty" hidden="hidden">
+        <p class="kicker">Aion 2</p>
+        <p id="empty-text"></p>
+      </section>
+    </main>
+    <script src="scripts/widget.js"></script>
+  </body>
+</html>

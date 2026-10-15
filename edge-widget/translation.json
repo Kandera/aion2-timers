@@ -1,0 +1,22 @@
+{
+  "en": {
+    "translation": {
+      "Aion 2 Timers": "Aion 2 Timers",
+      "Appearance": "Appearance",
+      "Text": "Text",
+      "Accent": "Accent",
+      "Background": "Background",
+      "Edge help": "Same pins as the overlay. Medium replaces the weather tile. Large spans the two right tiles."
+    }
+  },
+  "de": {
+    "translation": {
+      "Aion 2 Timers": "Aion 2 Timers",
+      "Appearance": "Darstellung",
+      "Text": "Text",
+      "Accent": "Akzent",
+      "Background": "Hintergrund",
+      "Edge help": "Dieselben Pins wie das Overlay. Medium ersetzt das Wetter-Tile. Large spannt die zwei rechten Tiles."
+    }
+  }
+}

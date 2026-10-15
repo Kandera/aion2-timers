@@ -24,7 +24,7 @@
           <button type="button" id="nav-timers" aria-current="page">Timers</button>
           <button type="button" id="nav-settings">Settings</button>
         </nav>
-        <p class="rail-note">Does not read the game client.<br />V:0.1.4 by Kandera</p>
+        <p class="rail-note">Does not read the game client.<br />V:0.1.5 by Kandera</p>
       </aside>
       <section class="stage">
         <header class="top" data-tauri-drag-region>
@@ -147,6 +147,7 @@
                 <option value="soon">Live and under 15 min</option>
               </select>
             </label>
+            <p class="hint">XENEON EDGE uses these pins. Medium replaces the weather tile. Large spans the two right tiles.</p>
             <label class="field">Monitor
               <select id="overlay-monitor">
                 <option value="">Current position</option>
@@ -181,6 +182,12 @@
           </section>
         </form>
           <article id="changelog-page" class="sheet" hidden>
+            <h2>0.1.5</h2>
+            <p>Ships in the 0.1.5 installer.</p>
+            <ul>
+              <li>XENEON EDGE widget uses the same pins as the overlay. Killed, Seen, and All, Next 3, Soon write back.</li>
+              <li>Import aion-2-timers.icuewidget from the release. Medium replaces the weather tile. Large spans the two right tiles.</li>
+            </ul>
             <h2>0.1.4</h2>
             <p>Ships in the 0.1.4 installer.</p>
             <ul>
