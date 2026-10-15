@@ -1,0 +1,326 @@
+[
+  {
+    "code": 2100003,
+    "name": "Neikel of the East",
+    "zone": "Verteron",
+    "location": "Cantas Valley Mushroom Tree Peak"
+  },
+  {
+    "code": 2100040,
+    "name": "Rotten Kutar",
+    "zone": "Verteron",
+    "location": "Marsh Outpost"
+  },
+  {
+    "code": 2100050,
+    "name": "Kernon of the West",
+    "zone": "Verteron",
+    "location": "Coastal Camp"
+  },
+  {
+    "code": 2100076,
+    "name": "Kusan the Mad Gladiator",
+    "zone": "Verteron",
+    "location": "Collapsed Pillar"
+  },
+  {
+    "code": 2100077,
+    "name": "Ritualist Garshim",
+    "zone": "Verteron",
+    "location": "Illusion Oratory Entrance"
+  },
+  {
+    "code": 2100079,
+    "name": "Bodyguard Teegant",
+    "zone": "Verteron",
+    "location": "Verteron Fortress Valley"
+  },
+  {
+    "code": 2100141,
+    "name": "Blooming Korin",
+    "zone": "Verteron",
+    "location": "Illusion Cavaliers' Campsite"
+  },
+  {
+    "code": 2100177,
+    "name": "Furious Saursus",
+    "zone": "Verteron",
+    "location": "Astin Mercenaries Base"
+  },
+  {
+    "code": 2100178,
+    "name": "Bloodfang Pnyn",
+    "zone": "Verteron",
+    "location": "Southern Shugo Station"
+  },
+  {
+    "code": 2100582,
+    "name": "Heretic Layla",
+    "zone": "Verteron",
+    "location": "Zumion Temple Pilgrimage Path"
+  },
+  {
+    "code": 2100617,
+    "name": "Black Tentacle Lawa",
+    "zone": "Verteron",
+    "location": "Ancient Zumion Temple Site"
+  },
+  {
+    "code": 2100661,
+    "name": "Phantasm Kasia",
+    "zone": "Verteron",
+    "location": "Garden of the Illusion God West Observatory"
+  },
+  {
+    "code": 2100708,
+    "name": "Centurion Demiros",
+    "zone": "Verteron",
+    "location": "Altamia Highland Ruins"
+  },
+  {
+    "code": 2100718,
+    "name": "Divine Ansas",
+    "zone": "Verteron",
+    "location": "Altamia Highland Ruins"
+  },
+  {
+    "code": 2100876,
+    "name": "Harvest Manager Moshav",
+    "zone": "Verteron",
+    "location": "Drana Transport Hub"
+  },
+  {
+    "code": 2100877,
+    "name": "Sentinel K'nash",
+    "zone": "Verteron",
+    "location": "Drana Transport Hub"
+  },
+  {
+    "code": 2100988,
+    "name": "Scholar Aulla",
+    "zone": "Verteron",
+    "location": "Abandoned Wind Breeze Office"
+  },
+  {
+    "code": 2100989,
+    "name": "Forest Warrior Aullamu",
+    "zone": "Verteron",
+    "location": "Aullaeu Village Valley"
+  },
+  {
+    "code": 2100991,
+    "name": "Chaser Taulo",
+    "zone": "Verteron",
+    "location": "Abandoned Wind Breeze Office"
+  },
+  {
+    "code": 2101016,
+    "name": "Researcher Setram",
+    "zone": "Verteron",
+    "location": "Nahid Disposal Plant"
+  },
+  {
+    "code": 2101074,
+    "name": "Eternal Gartua",
+    "zone": "Verteron",
+    "location": "Aullaeu Village Sky Island"
+  },
+  {
+    "code": 2101120,
+    "name": "Silent Dartan",
+    "zone": "Verteron",
+    "location": "Aullaeu Village Valley"
+  },
+  {
+    "code": 2101122,
+    "name": "Soul Ruler Kashapa",
+    "zone": "Verteron",
+    "location": "Ancient Zumion Temple Site"
+  },
+  {
+    "code": 2101131,
+    "name": "High Commander Lagta",
+    "zone": "Verteron",
+    "location": "Laborer's Rest Stop"
+  },
+  {
+    "code": 2400017,
+    "name": "Melted Danar",
+    "zone": "Altgard",
+    "location": "Creion Campsite"
+  },
+  {
+    "code": 2400074,
+    "name": "Black Warrior Aed",
+    "zone": "Altgard",
+    "location": "Neglected Crematorium"
+  },
+  {
+    "code": 2400140,
+    "name": "Faithful Rajit",
+    "zone": "Altgard",
+    "location": "Temporary Retreat"
+  },
+  {
+    "code": 2400141,
+    "name": "Berserker Vargor",
+    "zone": "Altgard",
+    "location": "Temporary Retreat"
+  },
+  {
+    "code": 2400212,
+    "name": "Predator Garsan",
+    "zone": "Altgard",
+    "location": "Forest Hideout"
+  },
+  {
+    "code": 2400223,
+    "name": "Blood Warrior Lannar",
+    "zone": "Altgard",
+    "location": "Moslan Forest Dry Shade"
+  },
+  {
+    "code": 2400274,
+    "name": "Deceiver Trid",
+    "zone": "Altgard",
+    "location": "Victorious Daeva's Statue"
+  },
+  {
+    "code": 2400335,
+    "name": "Blue Wave Kelpina",
+    "zone": "Altgard",
+    "location": "Healing Spring"
+  },
+  {
+    "code": 2400353,
+    "name": "High Overseer Nutah",
+    "zone": "Altgard",
+    "location": "Briskwind Shelter"
+  },
+  {
+    "code": 2400358,
+    "name": "Advisor Resana",
+    "zone": "Altgard",
+    "location": "Hidden Cave"
+  },
+  {
+    "code": 2400419,
+    "name": "Special Operations Leader Linx",
+    "zone": "Altgard",
+    "location": "Graverobber Campsite"
+  },
+  {
+    "code": 2400424,
+    "name": "Desecrator Newbold",
+    "zone": "Altgard",
+    "location": "Fissure Cave"
+  },
+  {
+    "code": 2400425,
+    "name": "Specter Archon Axios",
+    "zone": "Altgard",
+    "location": "Basfelt Ruins Cliff"
+  },
+  {
+    "code": 2400474,
+    "name": "Addicted Hardirun",
+    "zone": "Altgard",
+    "location": "Steel Hammer Workcamp"
+  },
+  {
+    "code": 2400504,
+    "name": "Executioner Barthien",
+    "zone": "Altgard",
+    "location": "Idun's Lake"
+  },
+  {
+    "code": 2400593,
+    "name": "Drakan Battalion Weapon Guruta",
+    "zone": "Altgard",
+    "location": "Steel Hammer Temporary Trading Post"
+  },
+  {
+    "code": 2400607,
+    "name": "Veteran Shujakan",
+    "zone": "Altgard",
+    "location": "Outskirts Stall"
+  },
+  {
+    "code": 2400608,
+    "name": "Visionary Karuka",
+    "zone": "Altgard",
+    "location": "Kumrica's Cellar"
+  },
+  {
+    "code": 2400659,
+    "name": "Dark Shadow Vishwada",
+    "zone": "Altgard",
+    "location": "Kumrica's Cellar"
+  },
+  {
+    "code": 2400709,
+    "name": "Sharp Shylak",
+    "zone": "Altgard",
+    "location": "Collapsed Hall Of Fame"
+  },
+  {
+    "code": 2400800,
+    "name": "Immortal Gartua",
+    "zone": "Altgard",
+    "location": "Remote Island"
+  },
+  {
+    "code": 2400853,
+    "name": "High Commander Lagta",
+    "zone": "Altgard",
+    "location": "Elim's Rest"
+  },
+  {
+    "code": 2400854,
+    "name": "Soul Ruler Kashapa",
+    "zone": "Altgard",
+    "location": "Idun's Lake"
+  },
+  {
+    "code": 2400855,
+    "name": "Silent Dartan",
+    "zone": "Altgard",
+    "location": "Graverobber Campsite"
+  },
+  {
+    "code": 2600068,
+    "name": "Argo, the Spirit King",
+    "zone": "Chaotic Lower Reshanta",
+    "location": ""
+  },
+  {
+    "code": 2600089,
+    "name": "Watcher Kaira",
+    "zone": "Chaotic Lower Reshanta",
+    "location": ""
+  },
+  {
+    "code": 2600084,
+    "name": "Guardian Lord Nahma",
+    "zone": "Chaotic Lower Reshanta",
+    "location": ""
+  },
+  {
+    "code": 2600096,
+    "name": "Executor Tamasa",
+    "zone": "Chaotic Lower Reshanta",
+    "location": ""
+  },
+  {
+    "code": 2600097,
+    "name": "Executor Argo",
+    "zone": "Chaotic Lower Reshanta",
+    "location": ""
+  },
+  {
+    "code": 2600098,
+    "name": "Executor Kaira",
+    "zone": "Chaotic Lower Reshanta",
+    "location": ""
+  }
+]

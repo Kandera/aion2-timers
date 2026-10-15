@@ -9,6 +9,7 @@ import { bindEditor } from "./editor.ts";
 import { esc } from "./lib/html.ts";
 import { pullCatalog } from "./lib/catalog.ts";
 import { applySpawns, parseSpawns } from "./lib/paste.ts";
+import { applyFieldReports, pullFieldReports } from "./lib/field-bosses.ts";
 import { dueAlerts, inQuietHours, markKilled, markSeen, zoneOk } from "./lib/schedule.ts";
 import { exportTimers, importTimers } from "./lib/share.ts";
 import { playAlert, unlockSound } from "./lib/sound.ts";
@@ -85,6 +86,9 @@ document.querySelector("#paste-spawn")?.addEventListener("click", () => {
 });
 document.querySelector("#catalog-refresh")?.addEventListener("click", () => {
   void refreshCatalog(false);
+});
+document.querySelector("#field-boss-refresh")?.addEventListener("click", () => {
+  void refreshFieldBosses(false);
 });
 document.querySelector("#export-timers")?.addEventListener("click", exportList);
 document.querySelector("#import-timers")?.addEventListener("click", () => {
@@ -519,11 +523,10 @@ async function boot(): Promise<void> {
     const node = document.querySelector("#hotkey-error");
     if (node && !node.textContent) node.textContent = "Desktop notifications are blocked. The sound still plays.";
   }
-  unlockSound();
   document.addEventListener("pointerdown", unlockSound);
   await restoreState();
   void checkForUpdate();
-  void refreshCatalog(true);
+  void refreshSavedTimers();
   void loadMonitors();
 }
 
@@ -560,6 +563,27 @@ async function refreshCatalog(quiet: boolean): Promise<void> {
   } catch (error) {
     if (status) status.textContent = quiet ? "Using the saved schedule." : error instanceof Error ? error.message : "Catalog fetch failed.";
   }
+}
+
+async function refreshFieldBosses(quiet: boolean): Promise<void> {
+  const status = document.querySelector("#field-boss-status");
+  try {
+    const reports = await pullFieldReports();
+    const before = state.timers.length;
+    state.timers = applyFieldReports(state.timers, reports, state.settings.defaultLeadMinutes);
+    const added = state.timers.length - before;
+    commit();
+    renderList();
+    const up = reports.filter((report) => report.up).length;
+    if (status) status.textContent = `EU Marchutan. ${reports.length} reports, ${added} new, ${up} up.`;
+  } catch (error) {
+    if (status) status.textContent = quiet ? "EU Marchutan report not loaded." : error instanceof Error ? error.message : "Field boss report failed.";
+  }
+}
+
+async function refreshSavedTimers(): Promise<void> {
+  await refreshCatalog(true);
+  await refreshFieldBosses(true);
 }
 
 let pendingUpdate: Update | null = null;
