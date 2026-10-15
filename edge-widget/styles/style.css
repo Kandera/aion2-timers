@@ -52,12 +52,13 @@ button { font: inherit; color: inherit; cursor: pointer; }
   gap: var(--space-gap);
 }
 
-.bar, .brand, .actions, .row-side {
+.bar, .brand, .bar-actions, .actions, .row-side {
   display: flex;
   align-items: center;
 }
 
 .bar { justify-content: space-between; gap: var(--space-gap); flex: 0 0 auto; }
+.bar-actions { gap: calc(var(--space-gap) * 0.7); }
 
 .brand { gap: calc(var(--space-gap) * 1.4); min-width: 0; }
 
@@ -88,6 +89,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   padding: 0 calc(var(--space-pad) * 0.8);
   font-size: var(--font-act);
 }
+.mode:disabled { opacity: 0.55; }
 
 .mode[aria-pressed="true"], .mode:active, .act:active {
   border-color: var(--accent-color);

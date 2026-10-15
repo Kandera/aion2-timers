@@ -37,6 +37,7 @@ const PEN = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-
 let state: AppState = loadState();
 let catalogBusy = false;
 let fieldBossBusy = false;
+let edgeRefreshing = false;
 let filter: Filter = "all";
 let listKey = "";
 let capturing = false;
@@ -564,6 +565,9 @@ async function boot(): Promise<void> {
     state.settings.overlayList = nextList(state.settings.overlayList);
     commit();
   });
+  await listen("edge-refresh-bosses", () => {
+    void refreshFieldBosses(false);
+  });
   await listen<{ id: string }>("timer-seen", (event) => {
     const timer = state.timers.find((item) => item.id === event.payload.id);
     if (!timer) return;
@@ -666,6 +670,8 @@ async function refreshCatalog(quiet: boolean): Promise<void> {
 async function refreshFieldBosses(quiet: boolean): Promise<void> {
   if (fieldBossBusy) return;
   fieldBossBusy = true;
+  edgeRefreshing = true;
+  publishEdge();
   const status = document.querySelector("#field-boss-status");
   const button = document.querySelector<HTMLButtonElement>("#field-boss-refresh");
   if (status) status.textContent = "Updating…";
@@ -685,7 +691,8 @@ async function refreshFieldBosses(quiet: boolean): Promise<void> {
     if (status) status.textContent = quiet && state.settings.fieldBossesUpdatedAt ? refreshedLabel("Current", state.settings.fieldBossesUpdatedAt) : error instanceof Error ? error.message : "Field boss report failed.";
   } finally {
     fieldBossBusy = false;
-    if (button) button.disabled = false;
+    edgeRefreshing = false;
+    publishEdge();
   }
 }
 
@@ -811,7 +818,7 @@ function nextList(current: OverlayList): OverlayList {
 }
 
 function publishEdge(now = DateTime.now()): void {
-  void emit("edge-snapshot", edgeSnapshot(state, now)).catch(() => {});
+  void emit("edge-snapshot", edgeSnapshot(state, now, edgeRefreshing)).catch(() => {});
 }
 
 function isOverlayList(value: string): value is OverlayList {

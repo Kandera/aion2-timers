@@ -2,7 +2,7 @@
 
 Desktop timers for Aion 2 events, bosses, and your own field bosses. The overlay follows what you pin in the editor.
 
-It does not read the game client, packets, or memory. V:0.1.5 by Kandera. Licensed under MIT.
+It does not read the game client, packets, or memory. V:0.1.6 by Kandera. Licensed under MIT.
 
 ## Install
 
@@ -11,6 +11,10 @@ Download the Windows setup from the [latest release](https://github.com/Kandera/
 Settings → Updates checks GitHub for a newer signed setup. When one is available, the app shows a dialog, then installs it and restarts.
 
 Timers, pins, and settings are stored in an app data file, so an update does not clear them.
+
+## 0.1.6
+
+- The Edge widget Refresh button pulls field bosses, the same as Settings.
 
 ## 0.1.5
 
@@ -53,7 +57,7 @@ Close the editor window to keep the overlay and alarms in the tray. Quit from th
 
 ## XENEON EDGE
 
-`edge-widget/` is an iCUE widget for the CORSAIR XENEON EDGE. It shows the same pinned timers as the overlay. Killed, Seen, and All / Next 3 / Soon write back to the app.
+`edge-widget/` is an iCUE widget for the CORSAIR XENEON EDGE. It shows the same pinned timers as the overlay. Killed, Seen, and All / Next 3 / Soon write back to the app. Refresh pulls field bosses, the same as Settings.
 
 The app listens on `127.0.0.1:47321` while it is running, including from the tray. iCUE asks to allow that address on import. Approve it. A website cannot read the list: the bridge rejects public web origins.
 

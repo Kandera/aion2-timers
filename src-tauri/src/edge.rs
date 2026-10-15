@@ -64,6 +64,7 @@ fn handle_client(stream: &mut TcpStream, app: &AppHandle, snapshot: &Mutex<Strin
             Action::Kill(id) => app.emit("timer-killed", serde_json::json!({ "id": id })),
             Action::Seen(id) => app.emit("timer-seen", serde_json::json!({ "id": id })),
             Action::List => app.emit("overlay-compact", ()),
+            Action::Bosses => app.emit("edge-refresh-bosses", ()),
         };
     }
     write_response(stream, reply.status, request.origin.as_deref(), &reply.body)
@@ -88,6 +89,7 @@ enum Action {
     Kill(String),
     Seen(String),
     List,
+    Bosses,
 }
 
 fn respond(request: &Request, snapshot: &str) -> Reply {
@@ -117,6 +119,7 @@ fn action_from(body: &str) -> Option<Action> {
     let value: serde_json::Value = serde_json::from_str(body).ok()?;
     match value.get("type").and_then(|item| item.as_str())? {
         "list" => Some(Action::List),
+        "bosses" => Some(Action::Bosses),
         "kill" => Some(Action::Kill(valid_id(value.get("id")?)?)),
         "seen" => Some(Action::Seen(valid_id(value.get("id")?)?)),
         _ => None,
@@ -295,6 +298,8 @@ mod tests {
         assert!(matches!(respond(&seen, "{}").action, Some(Action::Seen(_))));
         let list = request("POST", "/v1/action", None, true, r#"{"type":"list"}"#);
         assert!(matches!(respond(&list, "{}").action, Some(Action::List)));
+        let bosses = request("POST", "/v1/action", None, true, r#"{"type":"bosses"}"#);
+        assert!(matches!(respond(&bosses, "{}").action, Some(Action::Bosses)));
         let bad = request("POST", "/v1/action", None, true, r#"{"type":"kill","id":"../state"}"#);
         assert_eq!(respond(&bad, "{}").status, 400);
     }

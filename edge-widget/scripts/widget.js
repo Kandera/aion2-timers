@@ -11,6 +11,7 @@ const emptyText = document.querySelector("#empty-text");
 const status = document.querySelector("#status");
 const clock = document.querySelector("#clock");
 const mode = document.querySelector("#mode");
+const refresh = document.querySelector("#refresh");
 
 let started = false;
 let pulling = false;
@@ -91,6 +92,12 @@ function showSnapshot(data, stale) {
   clock.textContent = data.clock || "--:--:--";
   mode.textContent = data.listLabel || "All";
   mode.setAttribute("aria-pressed", String(data.overlayList !== "all"));
+  if (refresh) {
+    const busy = data.refreshing === true;
+    refresh.textContent = busy ? "…" : "Refresh";
+    refresh.disabled = busy;
+    refresh.setAttribute("aria-busy", String(busy));
+  }
   if (!data.rows.length) {
     board.hidden = true;
     empty.hidden = false;
@@ -172,6 +179,10 @@ function onClick(event) {
   if (!button) return;
   if (button.id === "mode") {
     void act("list");
+    return;
+  }
+  if (button.id === "refresh") {
+    void act("bosses");
     return;
   }
   if (button.dataset.act && button.dataset.id) void act(button.dataset.act, button.dataset.id);

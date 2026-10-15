@@ -28,6 +28,7 @@ export type EdgeSnapshot = {
   compactHidden: number;
   note: string;
   empty: string;
+  refreshing: boolean;
   rows: EdgeRow[];
 };
 
@@ -72,7 +73,7 @@ export function selectOverlay(state: AppState, now: DateTime): OverlaySelection 
   };
 }
 
-export function edgeSnapshot(state: AppState, now: DateTime): EdgeSnapshot {
+export function edgeSnapshot(state: AppState, now: DateTime, refreshing = false): EdgeSnapshot {
   const zone = state.settings.timeZone;
   const { shown, later, compactHidden } = selectOverlay(state, now);
   const hours = state.settings.overlayHours;
@@ -92,6 +93,7 @@ export function edgeSnapshot(state: AppState, now: DateTime): EdgeSnapshot {
     compactHidden,
     note: notes.join(" "),
     empty: shown.length === 0 ? (later > 0 ? `Nothing due in the next ${hours} h.` : "No timers on the overlay.") : "",
+    refreshing,
     rows: shown.map((item) => rowFrom(item.timer, item.occurrence, zone)),
   };
 }
