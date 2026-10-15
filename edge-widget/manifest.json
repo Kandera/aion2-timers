@@ -3,7 +3,7 @@
   "id": "app.aion2timers.edge",
   "name": "Aion 2 Timers",
   "description": "Pinned Aion 2 timers from the desktop app. Same list, Killed, and Seen as the overlay.",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "preview_icon": "resources/icon.svg",
   "min_framework_version": "1.0.0",
   "min_app_version": "5.47",

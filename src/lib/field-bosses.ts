@@ -30,7 +30,7 @@ export function reportsFromFeed(value: unknown, nowMs = Date.now()): FieldReport
   for (const map of server.maps) {
     for (const entry of map.entries) {
       const known = catalog.get(entry.bossCode);
-      if (!known || isWorldBossEntry(known.name, known.zone)) continue;
+      if (!known || isFixedWorldBoss(known.name)) continue;
       const up = entry.spawned === true;
       const nextAt = !up && entry.targetAt > 0 ? new Date(entry.targetAt).toISOString() : null;
       if (!up && entry.targetAt > 0 && entry.targetAt < nowMs - 6 * 60 * 60_000) continue;
@@ -44,7 +44,7 @@ export function applyFieldReports(timers: Timer[], reports: FieldReport[], leadM
   const next = timers.map((timer) => ({ ...timer }));
   const byId = new Map(next.map((timer) => [timer.id, timer]));
   for (const report of reports) {
-    if (isWorldBossEntry(report.name, report.zone)) continue;
+    if (isFixedWorldBoss(report.name)) continue;
     const id = `nm-${MARCHUTAN}-${report.code}`;
     const existing = byId.get(id);
     const name = fieldBossName(report, reports);
@@ -64,7 +64,7 @@ export function applyFieldReports(timers: Timer[], reports: FieldReport[], leadM
       nextAt: report.nextAt ?? existing.nextAt,
     };
   }
-  return next.filter((timer) => !isSavedWorldBoss(timer));
+  return next.filter((timer) => !isDuplicateWorldBoss(timer));
 }
 
 export async function pullFieldReports(): Promise<FieldReport[]> {
@@ -104,16 +104,11 @@ const worldBossNames = new Set(
 
 export function isDuplicateWorldBoss(timer: { id: string; name: string; note: string }): boolean {
   if (!timer.id.startsWith("nm-")) return false;
-  const zone = timer.note.split(" · ")[0] ?? "";
-  return isWorldBossEntry(timer.name.split(" · ")[0] ?? timer.name, zone);
+  return isFixedWorldBoss(timer.name.split(" · ")[0] ?? timer.name);
 }
 
-function isWorldBossEntry(name: string, zone: string): boolean {
-  return zone === "Chaotic Lower Reshanta" || worldBossNames.has(normName(name));
-}
-
-function isSavedWorldBoss(timer: Timer): boolean {
-  return isDuplicateWorldBoss(timer);
+function isFixedWorldBoss(name: string): boolean {
+  return worldBossNames.has(normName(name));
 }
 
 function normName(value: string): string {

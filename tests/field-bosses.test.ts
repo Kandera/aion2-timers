@@ -61,6 +61,35 @@ test("a Marchutan report becomes a named timer and keeps an interval", () => {
   assert.equal(added?.tracked, false);
 });
 
+test("a down Abyss field boss is a timer, a fixed world boss is not", () => {
+  const reports = reportsFromFeed(
+    {
+      servers: [
+        {
+          serverId: 2305,
+          maps: [
+            {
+              entries: [
+                { bossCode: 2600068, targetAt: Date.parse("2026-10-15T10:20:00.000Z") },
+                { bossCode: 2600097, targetAt: Date.parse("2026-10-17T19:30:00.000Z") },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    now,
+  );
+  assert.equal(reports.some((report) => report.name === "Argo, the Spirit King"), true);
+  assert.equal(reports.some((report) => report.name === "Executor Argo"), false);
+  const timers = applyFieldReports([], reports, 5);
+  const argo = timers.find((timer) => timer.name === "Argo, the Spirit King");
+  assert.equal(argo?.id, "nm-2305-2600068");
+  assert.equal(argo?.nextAt, "2026-10-15T10:20:00.000Z");
+  assert.equal(shownTimers(timers, "altgard").some((timer) => timer.id === "nm-2305-2600068"), true);
+  assert.equal(timers.some((timer) => timer.name === "Executor Argo"), false);
+});
+
 test("an unchosen field boss stays off, and a chosen pin stays on", () => {
   const state = parseState(
     JSON.stringify({
@@ -107,13 +136,15 @@ test("the first load drops pasted tests and old pulled field bosses", () => {
   const mixed = [
     boss("nm-2305-1", "Altgard boss", false, false),
     boss("nm-2305-2", "Verteron boss", false, false),
-    boss("nm-2305-3", "Reshanta boss", false, false),
+    boss("nm-2305-3", "Argo, the Spirit King", false, false),
+    boss("nm-2305-4", "Executor Argo", false, false),
   ];
   mixed[0].note = "Altgard · Remote Island";
   mixed[1].note = "Verteron · Laborer's Rest Stop";
   mixed[2].note = "Chaotic Lower Reshanta";
+  mixed[3].note = "Chaotic Lower Reshanta";
   const visible = shownTimers(mixed, "altgard").map((timer) => timer.id);
-  assert.deepEqual(visible, ["nm-2305-1"]);
+  assert.deepEqual(visible, ["nm-2305-1", "nm-2305-3"]);
 });
 
 function boss(
