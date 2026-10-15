@@ -7,6 +7,7 @@ export function defaultSettings(): Settings {
   return {
     timeZone: "Europe/Berlin",
     defaultLeadMinutes: 5,
+    alarmOnStart: true,
     alarmTone: 1,
     alarmVolume: 0.7,
     hotkey: "Ctrl+Shift+O",
@@ -25,6 +26,11 @@ export function defaultSettings(): Settings {
     overlayY: null,
     overlayWidth: 340,
     overlayHeight: 480,
+    fieldZone: "altgard",
+    fieldBossAuto: true,
+    fieldBossMinutes: 5,
+    catalogUpdatedAt: null,
+    fieldBossesUpdatedAt: null,
   };
 }
 
@@ -82,7 +88,12 @@ export function mergeCatalog(state: AppState, refresh: boolean): AppState {
 
 function normalize(parsed: Partial<AppState>, refresh = false): AppState {
   const raw = (parsed.settings ?? {}) as Partial<Settings> & { compact?: boolean };
-  const settings = { ...defaultSettings(), ...raw };
+  const clearFieldBosses = raw.fieldBossesCleared !== true;
+  const settings = { ...defaultSettings(), ...raw, fieldBossesCleared: true };
+  if (settings.fieldZone !== "verteron" && settings.fieldZone !== "altgard") settings.fieldZone = "altgard";
+  if (!Number.isInteger(settings.fieldBossMinutes) || settings.fieldBossMinutes < 1 || settings.fieldBossMinutes > 60) settings.fieldBossMinutes = 5;
+  if (typeof settings.catalogUpdatedAt !== "string") settings.catalogUpdatedAt = null;
+  if (typeof settings.fieldBossesUpdatedAt !== "string") settings.fieldBossesUpdatedAt = null;
   if (raw.overlayList !== "all" && raw.overlayList !== "next3" && raw.overlayList !== "soon") {
     settings.overlayList = raw.compact ? "next3" : "all";
   }
@@ -112,7 +123,7 @@ function normalize(parsed: Partial<AppState>, refresh = false): AppState {
 
   return {
     settings,
-    timers,
+    timers: clearFieldBosses ? timers.filter((timer) => !isRetiredFieldBoss(timer)) : timers,
     alerted: Array.isArray(parsed.alerted) ? parsed.alerted.filter((key) => typeof key === "string") : [],
   };
 }
@@ -134,12 +145,21 @@ function fromSeed(seed: Timer, existing: Timer, refresh: boolean): Timer {
   };
 }
 
+function isRetiredFieldBoss(timer: Timer): boolean {
+  return timer.id.startsWith("nm-") || timer.id.startsWith("field-") || timer.note.startsWith("Pasted spawn");
+}
+
 function complete(timer: Timer): Timer {
   const tone = timer.alarmTone;
+  const report = timer.id.startsWith("nm-");
+  const chosen = timer.tracked === true;
   return {
     ...timer,
     alarmTone: tone === 1 || tone === 2 || tone === 3 ? tone : null,
     alarmOnStart: timer.alarmOnStart !== false,
     seenUntil: typeof timer.seenUntil === "string" ? timer.seenUntil : null,
+    tracked: report ? chosen : timer.tracked,
+    overlay: report && !chosen ? false : timer.overlay,
+    alarm: report && !chosen ? false : timer.alarm,
   };
 }

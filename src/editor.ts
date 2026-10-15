@@ -227,6 +227,7 @@ function readTimer(
     alarmTone: tone === "1" ? 1 : tone === "2" ? 2 : tone === "3" ? 3 : null,
     alarmOnStart: data.get("alarmOnStart") === "on",
     seenUntil: original?.seenUntil ?? null,
+    tracked: original?.id.startsWith("nm-") ? true : original?.tracked,
     note: String(data.get("note") ?? "").trim(),
   };
   timer.customized = differsFromCatalog(timer);

@@ -96,16 +96,41 @@ export function dueAlerts(
   zone: string,
   already: ReadonlySet<string>,
 ): AlertHit[] {
+  return alertsFrom(timer, evaluate(timer, now, zone), now, zone, already);
+}
+
+export function alertsFrom(
+  timer: Timer,
+  occurrence: Occurrence,
+  now: DateTime,
+  zone: string,
+  already: ReadonlySet<string>,
+): AlertHit[] {
   const hits: AlertHit[] = [];
-  const lead = dueAlert(timer, now, zone, already);
-  if (lead) hits.push({ ...lead, started: false });
+  if (
+    timer.alarm &&
+    timer.leadMinutes >= 1 &&
+    occurrence.phase === "upcoming" &&
+    occurrence.start &&
+    occurrence.remainingMs != null &&
+    occurrence.remainingMs > 0 &&
+    occurrence.remainingMs <= timer.leadMinutes * 60_000
+  ) {
+    const key = alertKey(timer.id, occurrence.start);
+    if (!already.has(key)) hits.push({ key, minutes: Math.max(1, Math.ceil(occurrence.remainingMs / 60_000)), started: false });
+  }
   if (!timer.alarm || timer.alarmOnStart === false) return hits;
-  const start = justStarted(timer, now, zone);
+  const start = occurrence.phase === "live" || occurrence.phase === "entry" ? recentStart(occurrence, now) : justStarted(timer, now, zone);
   if (!start) return hits;
   const key = `${alertKey(timer.id, start)}#start`;
-  if (already.has(key)) return hits;
-  hits.push({ key, minutes: 0, started: true });
+  if (!already.has(key)) hits.push({ key, minutes: 0, started: true });
   return hits;
+}
+
+function recentStart(occurrence: Occurrence, now: DateTime): DateTime | null {
+  if (!occurrence.start) return null;
+  const age = now.toMillis() - occurrence.start.toMillis();
+  return age >= 0 && age <= 90_000 ? occurrence.start : null;
 }
 
 function evaluateRolling(timer: Timer, now: DateTime): Occurrence {
@@ -127,6 +152,19 @@ function evaluateOnce(timer: Timer, now: DateTime): Occurrence {
 }
 
 function evaluateClock(timer: Timer, now: DateTime): Occurrence {
+  if (timer.schedule.kind === "windows") return scanClock(timer, now);
+  const previous = previousFixed(now, timer.schedule);
+  if (previous && !dismissed(timer, previous)) {
+    const end = endFor(previous, timer.schedule, timer.durationMinutes);
+    if (end > previous && now < end) return openPhase(timer, previous, end, now);
+  }
+  let next = nextFixed(now, timer.schedule);
+  for (let hop = 0; next && hop < 8 && dismissed(timer, next); hop += 1) next = nextFixed(next, timer.schedule);
+  if (next) return pointing("upcoming", next, next, now);
+  return empty();
+}
+
+function scanClock(timer: Timer, now: DateTime): Occurrence {
   const origin = now.startOf("day").minus({ days: 1 });
   let open: { start: DateTime; end: DateTime } | null = null;
   let next: DateTime | null = null;
@@ -259,14 +297,72 @@ function justStarted(timer: Timer, now: DateTime, zone: string): DateTime | null
   }
   const zoned = timer.schedule.kind === "utc" ? now.toUTC() : now.setZone(zone);
   if (!zoned.isValid) return null;
-  const origin = zoned.startOf("day").minus({ days: 1 });
-  let found: DateTime | null = null;
-  for (let day = 0; day < 3; day += 1) {
-    for (const start of startsOn(origin.plus({ days: day }), timer.schedule)) {
-      if (dismissed(timer, start)) continue;
-      const age = zoned.toMillis() - start.toMillis();
-      if (age >= 0 && age <= windowMs) found = start;
-    }
+  const previous = previousFixed(zoned, timer.schedule);
+  if (!previous || dismissed(timer, previous)) return null;
+  const age = zoned.toMillis() - previous.toMillis();
+  return age >= 0 && age <= windowMs ? previous : null;
+}
+
+function nextFixed(now: DateTime, schedule: Schedule): DateTime | null {
+  switch (schedule.kind) {
+    case "hourly":
+      return stepAfter(now, now.set({ minute: schedule.minute, second: 0, millisecond: 0 }), 60);
+    case "every":
+      return schedule.hours < 1
+        ? null
+        : stepAfter(
+            now,
+            now.startOf("day").set({ hour: schedule.anchorHour, minute: schedule.anchorMinute, second: 0, millisecond: 0 }),
+            schedule.hours * 60,
+          );
+    case "daily":
+      return nextOnDays(now, [1, 2, 3, 4, 5, 6, 7], schedule.hour, schedule.minute);
+    case "weekdays":
+      return nextOnDays(now, schedule.days, schedule.hour, schedule.minute);
+    case "utc":
+      return nextOnDays(now, schedule.days.length > 0 ? schedule.days : [1, 2, 3, 4, 5, 6, 7], schedule.hour, schedule.minute);
+    default:
+      return null;
   }
-  return found;
+}
+
+function previousFixed(now: DateTime, schedule: Schedule): DateTime | null {
+  switch (schedule.kind) {
+    case "hourly":
+      return stepAfter(now, now.set({ minute: schedule.minute, second: 0, millisecond: 0 }), 60).minus({ hours: 1 });
+    case "every":
+      return schedule.hours < 1 ? null : nextFixed(now, schedule)?.minus({ hours: schedule.hours }) ?? null;
+    case "daily":
+      return previousOnDays(now, [1, 2, 3, 4, 5, 6, 7], schedule.hour, schedule.minute);
+    case "weekdays":
+      return previousOnDays(now, schedule.days, schedule.hour, schedule.minute);
+    case "utc":
+      return previousOnDays(now, schedule.days.length > 0 ? schedule.days : [1, 2, 3, 4, 5, 6, 7], schedule.hour, schedule.minute);
+    default:
+      return null;
+  }
+}
+
+function stepAfter(now: DateTime, anchor: DateTime, stepMinutes: number): DateTime {
+  const step = stepMinutes * 60_000;
+  const jumps = Math.floor((now.toMillis() - anchor.toMillis()) / step) + 1;
+  return anchor.plus({ milliseconds: jumps * step });
+}
+
+function nextOnDays(now: DateTime, days: Weekday[], hour: number, minute: number): DateTime | null {
+  if (days.length === 0) return null;
+  for (let offset = 0; offset < 8; offset += 1) {
+    const start = now.startOf("day").plus({ days: offset }).set({ hour, minute, second: 0, millisecond: 0 });
+    if (days.includes(start.weekday as Weekday) && start > now) return start;
+  }
+  return null;
+}
+
+function previousOnDays(now: DateTime, days: Weekday[], hour: number, minute: number): DateTime | null {
+  if (days.length === 0) return null;
+  for (let offset = 0; offset < 8; offset += 1) {
+    const start = now.startOf("day").minus({ days: offset }).set({ hour, minute, second: 0, millisecond: 0 });
+    if (days.includes(start.weekday as Weekday) && start <= now) return start;
+  }
+  return null;
 }

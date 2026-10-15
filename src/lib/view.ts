@@ -1,12 +1,14 @@
 import { DateTime } from "luxon";
 import { formatCountdown, formatRule, formatWhen } from "./format.ts";
-import { evaluate, upcomingStarts, type Phase } from "./schedule.ts";
+import { evaluate, upcomingStarts, type Occurrence, type Phase } from "./schedule.ts";
 import type { Category, Timer } from "./types.ts";
+import { isDuplicateWorldBoss } from "./field-bosses.ts";
 
 export type RowView = {
   id: string;
   name: string;
   category: Category;
+  kind: "field" | Category;
   rule: string;
   note: string;
   phase: Phase;
@@ -18,7 +20,10 @@ export type RowView = {
   later: string;
   overlay: boolean;
   alarm: boolean;
+  tracked: boolean;
 };
+
+export type ListFilter = Category | "all" | "world" | "field";
 
 export function present(timer: Timer, now: DateTime, zone: string): RowView {
   const occurrence = evaluate(timer, now, zone);
@@ -33,6 +38,7 @@ export function present(timer: Timer, now: DateTime, zone: string): RowView {
     id: timer.id,
     name: timer.name,
     category: timer.category,
+    kind: isFieldBoss(timer) ? "field" : timer.category,
     rule: formatRule(timer),
     note: timer.note,
     phase: occurrence.phase,
@@ -44,6 +50,21 @@ export function present(timer: Timer, now: DateTime, zone: string): RowView {
     later: upcomingStarts(timer, now, zone, 3).map((start) => formatWhen(start.setZone(zone))).join(" · "),
     overlay: timer.overlay,
     alarm: timer.alarm,
+    tracked: timer.tracked === true,
+  };
+}
+
+export function pulse(timer: Timer, now: DateTime, zone: string): { countdown: string; phase: Phase; when: string; soon: boolean } {
+  const occurrence = evaluate(timer, now, zone);
+  const soon =
+    occurrence.phase === "upcoming" &&
+    occurrence.remainingMs != null &&
+    occurrence.remainingMs <= 15 * 60_000;
+  return {
+    countdown: occurrence.remainingMs == null ? "—" : formatCountdown(occurrence.remainingMs),
+    phase: occurrence.phase,
+    when: occurrence.start ? formatWhen(occurrence.start.setZone(zone)) : "No time set",
+    soon,
   };
 }
 
@@ -55,22 +76,52 @@ export function dueOnOverlay(timer: Timer, now: DateTime, zone: string, hours: n
   return occurrence.remainingMs != null && occurrence.remainingMs <= limit;
 }
 
-export function ordered(
-  timers: Timer[],
-  now: DateTime,
-  zone: string,
-  category: Category | "all",
-): Timer[] {
+export function ordered(timers: Timer[], now: DateTime, zone: string, filter: ListFilter): Timer[] {
   return timers
-    .filter((timer) => category === "all" || timer.category === category)
+    .filter((timer) => matchesFilter(timer, filter))
     .slice()
     .sort((left, right) => rank(left, now, zone) - rank(right, now, zone) || left.name.localeCompare(right.name));
 }
 
-function rank(timer: Timer, now: DateTime, zone: string): number {
-  const occurrence = evaluate(timer, now, zone);
+export function isFieldBoss(timer: Timer): boolean {
+  return timer.id.startsWith("nm-") || (timer.category === "boss" && timer.schedule.kind === "rolling");
+}
+
+export function shownTimers(timers: Timer[], fieldZone: "verteron" | "altgard"): Timer[] {
+  return timers.filter((timer) => {
+    if (isDuplicateWorldBoss(timer)) return false;
+    const zone = fieldBossZone(timer);
+    return zone == null || zone === fieldZone;
+  });
+}
+
+function fieldBossZone(timer: Timer): "verteron" | "altgard" | null {
+  if (!isFieldBoss(timer)) return null;
+  const head = `${timer.note} ${timer.name}`;
+  if (/\bVerteron\b/.test(head) && !/\bAltgard\b/.test(head)) return "verteron";
+  if (/\bAltgard\b/.test(head) && !/\bVerteron\b/.test(head)) return "altgard";
+  return null;
+}
+
+function matchesFilter(timer: Timer, filter: ListFilter): boolean {
+  if (isDuplicateWorldBoss(timer)) return false;
+  if (filter === "all") return true;
+  if (filter === "world") return timer.category === "boss" && !isFieldBoss(timer);
+  if (filter === "field") return isFieldBoss(timer);
+  return timer.category === filter;
+}
+
+export function passesFilter(timer: Timer, filter: ListFilter): boolean {
+  return matchesFilter(timer, filter);
+}
+
+export function rankValue(occurrence: Occurrence): number {
   if (occurrence.phase === "overdue") return -2_000_000_000_000 + (occurrence.remainingMs ?? 0);
   if (occurrence.phase === "entry" || occurrence.phase === "live") return -1_000_000_000_000 + (occurrence.remainingMs ?? 0);
   if (occurrence.phase === "unset") return 2_000_000_000_000;
   return occurrence.remainingMs ?? 1_000_000_000_000;
+}
+
+function rank(timer: Timer, now: DateTime, zone: string): number {
+  return rankValue(evaluate(timer, now, zone));
 }

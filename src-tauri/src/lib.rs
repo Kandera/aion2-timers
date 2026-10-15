@@ -1,3 +1,5 @@
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{Emitter, Manager};
@@ -174,13 +176,13 @@ pub fn run() {
                 let _ = window.hide();
                 let _ = window.emit("overlay-visibility", false);
             }
-            tauri::WindowEvent::Moved(position) if window.label() == "overlay" => {
+            tauri::WindowEvent::Moved(position) if window.label() == "overlay" && geometry_due() => {
                 let _ = window.emit(
                     "overlay-moved",
                     serde_json::json!({ "x": position.x, "y": position.y }),
                 );
             }
-            tauri::WindowEvent::Resized(size) if window.label() == "overlay" => {
+            tauri::WindowEvent::Resized(size) if window.label() == "overlay" && geometry_due() => {
                 let _ = window.emit(
                     "overlay-resized",
                     serde_json::json!({ "width": size.width, "height": size.height }),
@@ -190,4 +192,15 @@ pub fn run() {
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+fn geometry_due() -> bool {
+    static LAST_MS: AtomicU64 = AtomicU64::new(0);
+    let now = SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_millis() as u64).unwrap_or(0);
+    let prev = LAST_MS.load(Ordering::Relaxed);
+    if now.saturating_sub(prev) < 100 {
+        return false;
+    }
+    LAST_MS.store(now, Ordering::Relaxed);
+    true
 }

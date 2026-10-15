@@ -1,4 +1,5 @@
 export type Category = "event" | "boss" | "pvp" | "system";
+export type FieldZone = "verteron" | "altgard";
 export type AlarmTone = 1 | 2 | 3;
 export type OverlayList = "all" | "next3" | "soon";
 
@@ -34,6 +35,8 @@ export type Timer = {
   overlay: boolean;
   alarm: boolean;
   leadMinutes: number;
+  /** Set once the user turns a field boss on or off. Missing means still at the default off. */
+  tracked?: boolean;
   seeded: boolean;
   customized: boolean;
   /** Set only when a witnessed kill should roll the next spawn. */
@@ -59,6 +62,7 @@ export type CatalogSeed = {
 export type Settings = {
   timeZone: string;
   defaultLeadMinutes: number;
+  alarmOnStart: boolean;
   alarmTone: 1 | 2 | 3;
   alarmVolume: number;
   hotkey: string;
@@ -77,6 +81,13 @@ export type Settings = {
   overlayY: number | null;
   overlayWidth: number;
   overlayHeight: number;
+  fieldZone: FieldZone;
+  fieldBossAuto: boolean;
+  fieldBossMinutes: number;
+  catalogUpdatedAt: string | null;
+  fieldBossesUpdatedAt: string | null;
+  /** Set after the first launch that drops old pasted and pulled field bosses. */
+  fieldBossesCleared?: boolean;
 };
 
 export type AppState = {

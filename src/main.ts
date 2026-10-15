@@ -10,20 +10,21 @@ import { esc } from "./lib/html.ts";
 import { pullCatalog } from "./lib/catalog.ts";
 import { applySpawns, parseSpawns } from "./lib/paste.ts";
 import { applyFieldReports, pullFieldReports } from "./lib/field-bosses.ts";
-import { dueAlerts, inQuietHours, markKilled, markSeen, zoneOk } from "./lib/schedule.ts";
+import { alertsFrom, evaluate, inQuietHours, markKilled, markSeen, zoneOk, type Occurrence } from "./lib/schedule.ts";
 import { exportTimers, importTimers } from "./lib/share.ts";
 import { playAlert, unlockSound } from "./lib/sound.ts";
 import { loadState, mergeCatalog, mergeStores, parseState, resetToCatalog, saveState } from "./lib/state.ts";
-import type { AppState, Category, OverlayList, Timer } from "./lib/types.ts";
-import { formatClock } from "./lib/format.ts";
-import { ordered, present, type RowView } from "./lib/view.ts";
+import type { AppState, OverlayList, Timer } from "./lib/types.ts";
+import { formatClock, formatCountdown, formatWhen } from "./lib/format.ts";
+import { ordered, passesFilter, present, rankValue, shownTimers, type RowView } from "./lib/view.ts";
 
-type Filter = Category | "all";
+type Filter = "all" | "event" | "world" | "field" | "pvp" | "system";
 
 const FILTERS: [Filter, string][] = [
   ["all", "All"],
   ["event", "Events"],
-  ["boss", "Bosses"],
+  ["world", "World bosses"],
+  ["field", "Field bosses"],
   ["pvp", "PvP"],
   ["system", "System"],
 ];
@@ -33,6 +34,8 @@ const BELL = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 
 const PEN = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>`;
 
 let state: AppState = loadState();
+let catalogBusy = false;
+let fieldBossBusy = false;
 let filter: Filter = "all";
 let listKey = "";
 let capturing = false;
@@ -100,9 +103,6 @@ document.querySelector("#import-file")?.addEventListener("change", (event) => {
   void importList(input.files[0]);
   input.value = "";
 });
-document.querySelector("#maintenance")?.addEventListener("click", () => {
-  editor?.open(maintenanceDraft(), state.settings.defaultLeadMinutes);
-});
 document.querySelector("#overlay-toggle")?.addEventListener("click", () => {
   state.settings.overlayVisible = !state.settings.overlayVisible;
   commit();
@@ -115,8 +115,8 @@ list?.addEventListener("click", (event) => {
   if (!timer) return;
   const act = button.dataset.act;
   if (act === "edit") editor?.open(timer, state.settings.defaultLeadMinutes);
-  if (act === "overlay") replace({ ...timer, overlay: !timer.overlay });
-  if (act === "alarm") replace({ ...timer, alarm: !timer.alarm });
+  if (act === "overlay") replace({ ...timer, overlay: !timer.overlay, tracked: timer.id.startsWith("nm-") ? true : timer.tracked });
+  if (act === "alarm") replace({ ...timer, alarm: !timer.alarm, tracked: timer.id.startsWith("nm-") ? true : timer.tracked });
   if (act === "kill") {
     const next = markKilled(timer, DateTime.now());
     if (next) replace(next);
@@ -134,7 +134,7 @@ renderFilters();
 renderList();
 syncOverlayButton();
 void boot();
-window.setInterval(tick, 250);
+window.setInterval(tick, 1000);
 tick();
 
 function showPage(page: "timers" | "settings"): void {
@@ -177,7 +177,9 @@ function bindWindowDrag(): void {
   }
 }
 
+
 function renderFilters(): void {
+  renderFieldZone();
   if (!filters) return;
   filters.innerHTML = FILTERS.map(
     ([id, label]) =>
@@ -192,10 +194,29 @@ function renderFilters(): void {
   });
 }
 
+function renderFieldZone(): void {
+  const node = document.querySelector<HTMLElement>("#field-zone");
+  if (!node) return;
+  const current = state.settings.fieldZone;
+  node.innerHTML = (["altgard", "verteron"] as const)
+    .map((zone) => `<button type="button" data-zone="${zone}" aria-pressed="${current === zone}">${zone === "altgard" ? "Altgard" : "Verteron"}</button>`)
+    .join("");
+  node.querySelectorAll("button").forEach((button) => {
+    button.addEventListener("click", () => {
+      const zone = button.dataset.zone;
+      if (zone !== "altgard" && zone !== "verteron") return;
+      state.settings.fieldZone = zone;
+      commit();
+      renderFieldZone();
+      renderList();
+    });
+  });
+}
+
 function renderList(): void {
   if (!list) return;
   const now = DateTime.now();
-  const rows = ordered(state.timers, now, state.settings.timeZone, filter);
+  const rows = ordered(shownTimers(state.timers, state.settings.fieldZone), now, state.settings.timeZone, filter);
   listKey = rows.map((timer) => timer.id).join("|");
   if (rows.length === 0) {
     list.innerHTML = `<p class="empty">No timers in this category.</p>`;
@@ -209,7 +230,7 @@ function rowHtml(view: RowView): string {
   const kill = view.canKill
     ? `<button type="button" class="kill" data-act="kill">Killed</button>`
     : "";
-  return `<article class="row" data-id="${esc(view.id)}" data-category="${view.category}" data-overdue="${view.phase === "overdue"}">
+  return `<article class="row" data-id="${esc(view.id)}" data-category="${view.category}" data-kind="${view.kind}" data-tracked="${view.tracked}" data-overdue="${view.phase === "overdue"}">
     <div class="pip"></div>
     <div class="meta">
       <h2>${esc(view.name)}</h2>
@@ -233,37 +254,58 @@ function rowHtml(view: RowView): string {
 
 function tick(): void {
   const now = DateTime.now();
-  const server = now.setZone(state.settings.timeZone);
+  const zone = state.settings.timeZone;
+  const server = now.setZone(zone);
   const serverNode = document.querySelector("#clock-st");
   const localNode = document.querySelector("#clock-lt");
   if (serverNode) serverNode.textContent = server.isValid ? formatClock(server) : "Invalid";
   if (localNode) localNode.textContent = formatClock(now);
   const warning = document.querySelector("#clock-warning");
   if (warning) warning.textContent = clockWarning(now);
-  const rows = ordered(state.timers, now, state.settings.timeZone, filter);
-  const key = rows.map((timer) => timer.id).join("|");
-  if (key !== listKey) renderList();
-  else refreshRows(now);
-  void checkAlerts(now);
+  const ranked = shownTimers(state.timers, state.settings.fieldZone).map((timer) => ({
+    timer,
+    occurrence: evaluate(timer, now, zone),
+  }));
+  const settingsOpen = document.querySelector("#settings-page")?.hasAttribute("hidden") === false;
+  if (!settingsOpen) paintList(ranked, now, zone);
+  fireAlerts(ranked, now, zone);
+  maybeRefreshFieldBosses(now);
 }
 
-function refreshRows(now: DateTime): void {
+function paintList(ranked: { timer: Timer; occurrence: Occurrence }[], now: DateTime, zone: string): void {
+  const rows = ranked
+    .filter((item) => passesFilter(item.timer, filter))
+    .sort((left, right) => rankValue(left.occurrence) - rankValue(right.occurrence) || left.timer.name.localeCompare(right.timer.name));
+  const key = rows.map((item) => item.timer.id).join("|");
+  if (key !== listKey) {
+    renderList();
+    return;
+  }
+  refreshRows(rows, now, zone);
+}
+
+function refreshRows(rows: { timer: Timer; occurrence: Occurrence }[], _now: DateTime, zone: string): void {
   if (!list) return;
-  for (const timer of state.timers) {
-    const row = list.querySelector(`[data-id="${CSS.escape(timer.id)}"]`);
-    if (!row) continue;
-    const view = present(timer, now, state.settings.timeZone);
+  const byId = new Map(rows.map((item) => [item.timer.id, item.occurrence]));
+  for (const row of list.querySelectorAll<HTMLElement>("[data-id]")) {
+    const occurrence = row.dataset.id ? byId.get(row.dataset.id) : undefined;
+    if (!occurrence) continue;
+    const countdown = occurrence.remainingMs == null ? "—" : formatCountdown(occurrence.remainingMs);
+    const when = occurrence.start ? formatWhen(occurrence.start.setZone(zone)) : "No time set";
+    const soon = occurrence.phase === "upcoming" && occurrence.remainingMs != null && occurrence.remainingMs <= 15 * 60_000;
     const count = row.querySelector("[data-count]");
-    if (count) {
-      count.textContent = view.countdown;
-      count.setAttribute("data-phase", view.phase);
-      count.setAttribute("data-soon", String(view.soon));
+    if (count && count.textContent !== countdown) {
+      count.textContent = countdown;
+      count.setAttribute("data-phase", occurrence.phase);
+      count.setAttribute("data-soon", String(soon));
     }
-    const when = row.querySelector("[data-when]");
-    if (when) when.textContent = view.when;
+    const whenNode = row.querySelector("[data-when]");
+    if (whenNode && whenNode.textContent !== when) whenNode.textContent = when;
     const phase = row.querySelector("[data-phase-label]");
-    if (phase) phase.textContent = view.phase === "upcoming" ? "" : labelFor(view.phase);
-    row.setAttribute("data-overdue", String(view.phase === "overdue"));
+    const label = occurrence.phase === "upcoming" ? "" : labelFor(occurrence.phase);
+    if (phase && phase.textContent !== label) phase.textContent = label;
+    const overdue = String(occurrence.phase === "overdue");
+    if (row.getAttribute("data-overdue") !== overdue) row.setAttribute("data-overdue", overdue);
   }
 }
 
@@ -308,10 +350,11 @@ function bindSettings(): void {
   const hotkey = document.querySelector<HTMLInputElement>("#hotkey");
   const overlayHours = document.querySelector<HTMLInputElement>("#overlay-hours");
   const quietEnabled = document.querySelector<HTMLInputElement>("#quiet-enabled");
+  const alarmOnStart = document.querySelector<HTMLInputElement>("#alarm-on-start");
   const quietFrom = document.querySelector<HTMLInputElement>("#quiet-from");
   const quietUntil = document.querySelector<HTMLInputElement>("#quiet-until");
   const monitor = document.querySelector<HTMLSelectElement>("#overlay-monitor");
-  if (!zone || !lead || !visible || !overlayList || !click || !top || !opacity || !scale || !hotkey || !overlayHours || !quietEnabled || !quietFrom || !quietUntil || !monitor) return;
+  if (!zone || !lead || !visible || !overlayList || !click || !top || !opacity || !scale || !hotkey || !overlayHours || !quietEnabled || !alarmOnStart || !quietFrom || !quietUntil || !monitor) return;
   syncSettings();
   zone.addEventListener("change", () => {
     const next = zone.value.trim();
@@ -360,6 +403,10 @@ function bindSettings(): void {
   });
   quietEnabled.addEventListener("change", () => {
     state.settings.quietEnabled = quietEnabled.checked;
+    commit();
+  });
+  alarmOnStart.addEventListener("change", () => {
+    state.settings.alarmOnStart = alarmOnStart.checked;
     commit();
   });
   quietFrom.addEventListener("change", () => {
@@ -428,6 +475,19 @@ function bindSettings(): void {
       },
     );
   });
+  document.querySelector<HTMLInputElement>("#field-boss-auto")?.addEventListener("change", (event) => {
+    const input = event.target;
+    if (!(input instanceof HTMLInputElement)) return;
+    state.settings.fieldBossAuto = input.checked;
+    commit();
+  });
+  document.querySelector<HTMLInputElement>("#field-boss-minutes")?.addEventListener("change", (event) => {
+    const input = event.target;
+    if (!(input instanceof HTMLInputElement)) return;
+    const value = Number(input.value);
+    state.settings.fieldBossMinutes = Number.isInteger(value) && value >= 1 && value <= 60 ? value : 5;
+    commit();
+  });
 }
 
 function syncSettings(): void {
@@ -437,9 +497,11 @@ function syncSettings(): void {
   setValue("#hotkey", settings.hotkey);
   setValue("#overlay-hours", String(settings.overlayHours));
   setChecked("#overlay-visible", settings.overlayVisible);
-  setChecked("#overlay-visible", settings.overlayVisible);
   setValue("#overlay-list", settings.overlayList);
   setChecked("#quiet-enabled", settings.quietEnabled);
+  setChecked("#alarm-on-start", settings.alarmOnStart);
+  setChecked("#field-boss-auto", settings.fieldBossAuto);
+  setValue("#field-boss-minutes", String(settings.fieldBossMinutes));
   setValue("#quiet-from", String(settings.quietFrom));
   setValue("#quiet-until", String(settings.quietUntil));
   setValue("#overlay-monitor", settings.overlayMonitor ?? "");
@@ -487,13 +549,13 @@ async function boot(): Promise<void> {
   await listen<{ x: number; y: number }>("overlay-moved", (event) => {
     state.settings.overlayX = event.payload.x;
     state.settings.overlayY = event.payload.y;
-    persist();
+    rememberOverlayGeometry();
   });
   await listen<{ width: number; height: number }>("overlay-resized", (event) => {
     if (event.payload.width < 200 || event.payload.height < 120) return;
     state.settings.overlayWidth = event.payload.width;
     state.settings.overlayHeight = event.payload.height;
-    persist();
+    rememberOverlayGeometry();
   });
   await listen("overlay-compact", () => {
     state.settings.overlayList = nextList(state.settings.overlayList);
@@ -525,6 +587,7 @@ async function boot(): Promise<void> {
   }
   document.addEventListener("pointerdown", unlockSound);
   await restoreState();
+  paintRefreshStatus();
   void checkForUpdate();
   void refreshSavedTimers();
   void loadMonitors();
@@ -551,33 +614,75 @@ async function pasteSpawn(): Promise<void> {
   if (status) status.textContent = result.notes.join(" ");
 }
 
+
+
+function paintRefreshStatus(): void {
+  const catalog = document.querySelector("#catalog-status");
+  const field = document.querySelector("#field-boss-status");
+  if (catalog && !catalogBusy) catalog.textContent = refreshedLabel("Current", state.settings.catalogUpdatedAt);
+  if (field && !fieldBossBusy) field.textContent = refreshedLabel("Current", state.settings.fieldBossesUpdatedAt);
+}
+
+function refreshedLabel(word: string, iso: string | null, detail = ""): string {
+  if (!iso) return "Not checked.";
+  const when = DateTime.fromISO(iso).setZone(state.settings.timeZone);
+  if (!when.isValid) return "Not checked.";
+  return `${word}. Last updated ${when.toFormat("HH:mm")}.${detail ? ` ${detail}` : ""}`;
+}
+
+function maybeRefreshFieldBosses(now: DateTime): void {
+  if (!state.settings.fieldBossAuto || fieldBossBusy) return;
+  const last = state.settings.fieldBossesUpdatedAt;
+  const at = last ? DateTime.fromISO(last) : null;
+  const age = at?.isValid ? now.toMillis() - at.toMillis() : Number.POSITIVE_INFINITY;
+  if (age < state.settings.fieldBossMinutes * 60_000) return;
+  void refreshFieldBosses(true);
+}
+
 async function refreshCatalog(quiet: boolean): Promise<void> {
+  if (catalogBusy) return;
+  catalogBusy = true;
   const status = document.querySelector("#catalog-status");
+  const button = document.querySelector<HTMLButtonElement>("#catalog-refresh");
+  if (status) status.textContent = "Updating…";
+  if (button) button.disabled = true;
   try {
     const result = await pullCatalog();
     state = mergeCatalog(state, true);
+    state.settings.catalogUpdatedAt = new Date().toISOString();
     commit();
-    renderList();
-    syncSettings();
-    if (status) status.textContent = result.changed ? `Catalog updated. ${result.count} timers.` : "Catalog is already current.";
+    if (status) status.textContent = refreshedLabel(result.changed ? "Updated" : "Current", state.settings.catalogUpdatedAt, result.changed ? `${result.count} timers.` : "");
   } catch (error) {
-    if (status) status.textContent = quiet ? "Using the saved schedule." : error instanceof Error ? error.message : "Catalog fetch failed.";
+    if (status) status.textContent = quiet && state.settings.catalogUpdatedAt ? refreshedLabel("Current", state.settings.catalogUpdatedAt) : error instanceof Error ? error.message : "Catalog fetch failed.";
+  } finally {
+    catalogBusy = false;
+    if (button) button.disabled = false;
   }
 }
 
 async function refreshFieldBosses(quiet: boolean): Promise<void> {
+  if (fieldBossBusy) return;
+  fieldBossBusy = true;
   const status = document.querySelector("#field-boss-status");
+  const button = document.querySelector<HTMLButtonElement>("#field-boss-refresh");
+  if (status) status.textContent = "Updating…";
+  if (button) button.disabled = true;
   try {
     const reports = await pullFieldReports();
     const before = state.timers.length;
     state.timers = applyFieldReports(state.timers, reports, state.settings.defaultLeadMinutes);
     const added = state.timers.length - before;
+    state.settings.fieldBossesUpdatedAt = new Date().toISOString();
     commit();
     renderList();
     const up = reports.filter((report) => report.up).length;
-    if (status) status.textContent = `EU Marchutan. ${reports.length} reports, ${added} new, ${up} up.`;
+    const detail = added > 0 ? `${reports.length} reports, ${added} new, ${up} up.` : `${reports.length} reports, ${up} up.`;
+    if (status) status.textContent = refreshedLabel(added > 0 ? "Updated" : "Current", state.settings.fieldBossesUpdatedAt, detail);
   } catch (error) {
-    if (status) status.textContent = quiet ? "EU Marchutan report not loaded." : error instanceof Error ? error.message : "Field boss report failed.";
+    if (status) status.textContent = quiet && state.settings.fieldBossesUpdatedAt ? refreshedLabel("Current", state.settings.fieldBossesUpdatedAt) : error instanceof Error ? error.message : "Field boss report failed.";
+  } finally {
+    fieldBossBusy = false;
+    if (button) button.disabled = false;
   }
 }
 
@@ -633,18 +738,19 @@ async function applyChrome(): Promise<void> {
   });
 }
 
-async function checkAlerts(now: DateTime): Promise<void> {
+function fireAlerts(ranked: { timer: Timer; occurrence: Occurrence }[], now: DateTime, zone: string): void {
   const seen = new Set(state.alerted);
   const quiet = inQuietHours(now, state.settings.quietFrom, state.settings.quietUntil, state.settings.quietEnabled);
   let changed = false;
-  for (const timer of state.timers) {
-    for (const due of dueAlerts(timer, now, state.settings.timeZone, seen)) {
+  for (const item of ranked) {
+    for (const due of alertsFrom(item.timer, item.occurrence, now, zone, seen)) {
+      if (due.started && !state.settings.alarmOnStart) continue;
       state.alerted.push(due.key);
       seen.add(due.key);
       changed = true;
       if (quiet) continue;
-      playAlert(timer.alarmTone ?? state.settings.alarmTone, state.settings.alarmVolume);
-      const body = due.started ? `${timer.name} started` : `${timer.name} in ${due.minutes} min`;
+      playAlert(item.timer.alarmTone ?? state.settings.alarmTone, state.settings.alarmVolume);
+      const body = due.started ? `${item.timer.name} started` : `${item.timer.name} in ${due.minutes} min`;
       try {
         sendNotification({ title: "Aion 2 Timers", body });
       } catch {
@@ -663,7 +769,21 @@ async function checkAlerts(now: DateTime): Promise<void> {
 
 let monitors: { name: string; x: number; y: number }[] = [];
 
+let geometryTimer = 0;
+
+function rememberOverlayGeometry(): void {
+  window.clearTimeout(geometryTimer);
+  geometryTimer = window.setTimeout(() => {
+    geometryTimer = 0;
+    persist();
+  }, 400);
+}
+
 function persist(): void {
+  if (geometryTimer) {
+    window.clearTimeout(geometryTimer);
+    geometryTimer = 0;
+  }
   saveState(state);
   void invoke("save_state_file", { state: JSON.stringify(state) });
 }
@@ -711,28 +831,6 @@ async function importList(file: File): Promise<void> {
   if (status) status.textContent = result.note;
 }
 
-function maintenanceDraft(): Timer {
-  const at = DateTime.now().setZone(state.settings.timeZone).plus({ hours: 2 }).toUTC().toISO();
-  return {
-    id: "new",
-    name: "Maintenance ends",
-    category: "system",
-    schedule: { kind: "once", at: at ?? "" },
-    durationMinutes: 0,
-    entryMinutes: 0,
-    overlay: true,
-    alarm: true,
-    leadMinutes: state.settings.defaultLeadMinutes,
-    seeded: false,
-    customized: false,
-    respawnIntervalMinutes: null,
-    nextAt: null,
-    alarmTone: null,
-    alarmOnStart: true,
-    seenUntil: null,
-    note: "Server down until this time.",
-  };
-}
 
 async function loadMonitors(): Promise<void> {
   const select = document.querySelector<HTMLSelectElement>("#overlay-monitor");

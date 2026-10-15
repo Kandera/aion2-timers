@@ -1,4 +1,5 @@
 import names from "../field-bosses.json" with { type: "json" };
+import { catalog as worldCatalog } from "./catalog.ts";
 import type { Timer } from "./types.ts";
 
 export const FIELD_BOSS_URL =
@@ -29,7 +30,7 @@ export function reportsFromFeed(value: unknown, nowMs = Date.now()): FieldReport
   for (const map of server.maps) {
     for (const entry of map.entries) {
       const known = catalog.get(entry.bossCode);
-      if (!known) continue;
+      if (!known || isWorldBossEntry(known.name, known.zone)) continue;
       const up = entry.spawned === true;
       const nextAt = !up && entry.targetAt > 0 ? new Date(entry.targetAt).toISOString() : null;
       if (!up && entry.targetAt > 0 && entry.targetAt < nowMs - 6 * 60 * 60_000) continue;
@@ -43,11 +44,13 @@ export function applyFieldReports(timers: Timer[], reports: FieldReport[], leadM
   const next = timers.map((timer) => ({ ...timer }));
   const byId = new Map(next.map((timer) => [timer.id, timer]));
   for (const report of reports) {
+    if (isWorldBossEntry(report.name, report.zone)) continue;
     const id = `nm-${MARCHUTAN}-${report.code}`;
     const existing = byId.get(id);
+    const name = fieldBossName(report, reports);
     const note = [report.zone, report.location, report.up ? "Reported up" : ""].filter(Boolean).join(" · ");
     if (!existing) {
-      const created = fieldTimer(id, report, note, leadMinutes);
+      const created = fieldTimer(id, report, name, note, leadMinutes);
       next.push(created);
       byId.set(id, created);
       continue;
@@ -56,12 +59,12 @@ export function applyFieldReports(timers: Timer[], reports: FieldReport[], leadM
     if (index < 0) continue;
     next[index] = {
       ...existing,
-      name: report.name,
+      name,
       note,
       nextAt: report.nextAt ?? existing.nextAt,
     };
   }
-  return next;
+  return next.filter((timer) => !isSavedWorldBoss(timer));
 }
 
 export async function pullFieldReports(): Promise<FieldReport[]> {
@@ -70,16 +73,17 @@ export async function pullFieldReports(): Promise<FieldReport[]> {
   return reportsFromFeed(await response.json());
 }
 
-function fieldTimer(id: string, report: FieldReport, note: string, leadMinutes: number): Timer {
+function fieldTimer(id: string, report: FieldReport, name: string, note: string, leadMinutes: number): Timer {
   return {
     id,
-    name: report.name,
+    name,
     category: "boss",
     schedule: { kind: "rolling" },
     durationMinutes: 0,
     entryMinutes: 0,
-    overlay: true,
-    alarm: true,
+    overlay: false,
+    alarm: false,
+    tracked: false,
     leadMinutes,
     seeded: false,
     customized: true,
@@ -90,6 +94,35 @@ function fieldTimer(id: string, report: FieldReport, note: string, leadMinutes: 
     seenUntil: null,
     note,
   };
+}
+
+const worldBossNames = new Set(
+  worldCatalog()
+    .filter((timer) => timer.category === "boss")
+    .map((timer) => normName(timer.name)),
+);
+
+export function isDuplicateWorldBoss(timer: { id: string; name: string; note: string }): boolean {
+  if (!timer.id.startsWith("nm-")) return false;
+  const zone = timer.note.split(" · ")[0] ?? "";
+  return isWorldBossEntry(timer.name.split(" · ")[0] ?? timer.name, zone);
+}
+
+function isWorldBossEntry(name: string, zone: string): boolean {
+  return zone === "Chaotic Lower Reshanta" || worldBossNames.has(normName(name));
+}
+
+function isSavedWorldBoss(timer: Timer): boolean {
+  return isDuplicateWorldBoss(timer);
+}
+
+function normName(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function fieldBossName(report: FieldReport, reports: FieldReport[]): string {
+  const shared = reports.some((other) => other.code !== report.code && other.name === report.name);
+  return shared ? `${report.name} · ${report.zone}` : report.name;
 }
 
 function findServer(value: unknown, serverId: number): { maps: FeedMap[] } | null {
