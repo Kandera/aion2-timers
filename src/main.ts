@@ -72,6 +72,9 @@ const editor = dialog
 document.querySelector("#win-close")?.addEventListener("click", () => {
   void getCurrentWindow().close();
 });
+document.querySelector("#update-check")?.addEventListener("click", () => {
+  void checkForUpdate();
+});
 document.querySelector("#update-install")?.addEventListener("click", () => {
   void installUpdate();
 });
@@ -708,7 +711,13 @@ function setUpdateStatus(text: string): void {
   if (node) node.textContent = text;
 }
 
+let updateBusy = false;
+
 async function checkForUpdate(): Promise<void> {
+  if (updateBusy) return;
+  updateBusy = true;
+  const button = document.querySelector<HTMLButtonElement>("#update-check");
+  if (button) button.disabled = true;
   setUpdateStatus("Checking…");
   document.querySelector("#update-install")?.setAttribute("hidden", "");
   try {
@@ -717,6 +726,9 @@ async function checkForUpdate(): Promise<void> {
     pendingUpdate = null;
     setUpdateStatus(`Update check failed. ${error}`);
     return;
+  } finally {
+    updateBusy = false;
+    if (button) button.disabled = false;
   }
   if (!pendingUpdate) {
     setUpdateStatus("Up to date.");
@@ -726,7 +738,8 @@ async function checkForUpdate(): Promise<void> {
   document.querySelector("#update-install")?.removeAttribute("hidden");
   const text = document.querySelector("#update-dialog-text");
   if (text) text.textContent = `Version ${pendingUpdate.version} is ready. It installs and restarts.`;
-  document.querySelector<HTMLDialogElement>("#update-dialog")?.showModal();
+  const dialog = document.querySelector<HTMLDialogElement>("#update-dialog");
+  if (dialog && !dialog.open) dialog.showModal();
 }
 
 async function installUpdate(): Promise<void> {
