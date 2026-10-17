@@ -123,7 +123,7 @@ export function alertsFrom(
   const start = occurrence.phase === "live" || occurrence.phase === "entry" ? recentStart(occurrence, now) : justStarted(timer, now, zone);
   if (!start) return hits;
   const key = `${alertKey(timer.id, start)}#start`;
-  if (!already.has(key)) hits.push({ key, minutes: 0, started: true });
+  if (!already.has(key)) hits.push({ key, minutes: entryLeft(timer, start, now), started: true });
   return hits;
 }
 
@@ -131,6 +131,13 @@ function recentStart(occurrence: Occurrence, now: DateTime): DateTime | null {
   if (!occurrence.start) return null;
   const age = now.toMillis() - occurrence.start.toMillis();
   return age >= 0 && age <= 90_000 ? occurrence.start : null;
+}
+
+function entryLeft(timer: Timer, start: DateTime, now: DateTime): number {
+  if (timer.entryMinutes < 1) return 0;
+  const left = start.plus({ minutes: timer.entryMinutes }).toMillis() - now.toMillis();
+  if (left <= 0) return 0;
+  return Math.max(1, Math.ceil(left / 60_000));
 }
 
 function evaluateRolling(timer: Timer, now: DateTime): Occurrence {

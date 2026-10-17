@@ -32,6 +32,7 @@ test("a start alert fires once inside the first minute", () => {
   assert.ok(timer);
   const started = DateTime.fromISO("2026-10-14T15:00:20", { zone });
   const hits = dueAlerts(timer, started, zone, new Set());
+  assert.equal(hits.find((hit) => hit.started)?.minutes, 3);
   assert.equal(hits.some((hit) => hit.started), true);
   const key = hits.find((hit) => hit.started)?.key ?? "";
   assert.equal(dueAlerts(timer, started, zone, new Set([key])).some((hit) => hit.started), false);

@@ -760,7 +760,11 @@ function fireAlerts(ranked: { timer: Timer; occurrence: Occurrence }[], now: Dat
       changed = true;
       if (quiet) continue;
       playAlert(item.timer.alarmTone ?? state.settings.alarmTone, state.settings.alarmVolume);
-      const body = due.started ? `${item.timer.name} started` : `${item.timer.name} in ${due.minutes} min`;
+      const body = due.started
+        ? due.minutes > 0
+          ? `${item.timer.name} started, ${due.minutes} min to enter`
+          : `${item.timer.name} started`
+        : `${item.timer.name} in ${due.minutes} min`;
       try {
         sendNotification({ title: "Aion 2 Timers", body });
       } catch {

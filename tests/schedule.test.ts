@@ -52,6 +52,16 @@ test("invasion entry then live window", () => {
   assert.ok(Math.abs((live.remainingMs ?? 0) - 9 * 60_000) < 1000);
 });
 
+test("shugo start counts the entry window, not the open duration", () => {
+  const started = evaluate(timer("shugo-festival"), at("2026-10-14T15:00:20"), zone);
+  assert.equal(started.phase, "entry");
+  assert.ok(Math.abs((started.remainingMs ?? 0) - (3 * 60_000 - 20_000)) < 1000);
+
+  const after = evaluate(timer("shugo-festival"), at("2026-10-14T15:04:00"), zone);
+  assert.equal(after.phase, "live");
+  assert.ok(Math.abs((after.remainingMs ?? 0) - 60_000) < 1000);
+});
+
 test("arena windows and the overnight gap", () => {
   const live = evaluate(timer("arena-of-tactics"), at("2026-10-14T12:00:00"), zone);
   assert.equal(live.phase, "live");

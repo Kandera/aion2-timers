@@ -5,8 +5,8 @@
     "category": "event",
     "schedule": { "kind": "hourly", "minute": 0 },
     "durationMinutes": 5,
-    "entryMinutes": 0,
-    "note": "Planning window. The activity itself varies."
+    "entryMinutes": 3,
+    "note": "3 min to enter."
   },
   {
     "id": "dimensional-invasion",

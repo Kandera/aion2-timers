@@ -2,7 +2,7 @@
 
 Desktop timers for Aion 2 events, bosses, and your own field bosses. The overlay follows what you pin in the editor.
 
-It does not read the game client, packets, or memory. V:0.1.7 by Kandera. Licensed under MIT.
+It does not read the game client, packets, or memory. V:0.1.8 by Kandera. Licensed under MIT.
 
 ## Install
 
@@ -11,6 +11,10 @@ Download the Windows setup from the [latest release](https://github.com/Kandera/
 Settings → Updates checks GitHub for a newer signed setup. When one is available, the app shows a dialog, then installs it and restarts.
 
 Timers, pins, and settings are stored in an app data file, so an update does not clear them.
+
+## 0.1.8
+
+- After an event starts, the countdown and the start alert show the time left to enter. Shugo Festival is 3 minutes.
 
 ## 0.1.7
 
@@ -51,7 +55,7 @@ Export and import stay in the code, hidden in the window. Field bosses start off
 
 The overlay button cycles All, Next 3, and Soon. It fades when nothing is soon, and comes back under the pointer. Click-through stays visible. Pick the monitor under Settings → Overlay.
 
-Each timer can have its own tone, and a second alert when it starts. Quiet hours mute the sound. The row stays. Seen skips one clock time. Killed still rolls an interval.
+Each timer can have its own tone, and a second alert when it starts. That alert, and the countdown once it has started, use the entry window when one is set: Shugo Festival is 3 minutes to get in, then the rest of the open time. Quiet hours mute the sound. The row stays. Seen skips one clock time. Killed still rolls an interval.
 
 Each row shows the next three times.
 
