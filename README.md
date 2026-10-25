@@ -10,6 +10,8 @@ Download the Windows setup from the [latest release](https://github.com/Kandera/
 
 Settings → Updates checks GitHub for a newer signed setup. When one is available, the app shows a dialog, then installs it and restarts.
 
+Windows Defender can flag a new unsigned setup as a trojan and delete it. That can remove the installed app before the new one is in place. If an update disappears, install the setup from the release page. An exception on one PC does not help anyone else.
+
 Timers, pins, and settings are stored in an app data file, so an update does not clear them.
 
 ## 0.1.10
