@@ -16,7 +16,7 @@ Timers, pins, and settings are stored in an app data file, so an update does not
 
 - Check for updates runs the check. It says Checking, Up to date, or why it failed.
 
-## 0.1.8
+- Watcher Kaira stays up 30 minutes. Arena of Tactics closes at 13:00. Nahma is 21:05 and the executors are 21:35, matching the map countdown.
 
 - After an event starts, the countdown and the start alert show the time left to enter. Shugo Festival is 3 minutes.
 
