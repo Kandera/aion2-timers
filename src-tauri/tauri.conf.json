@@ -69,7 +69,7 @@
         "https://github.com/Kandera/aion2-timers/releases/latest/download/latest.json"
       ],
       "windows": {
-        "installMode": "passive"
+        "installMode": "basicUi"
       }
     }
   }

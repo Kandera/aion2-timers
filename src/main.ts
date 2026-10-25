@@ -2,7 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { emit, listen } from "@tauri-apps/api/event";
 import { availableMonitors, getCurrentWindow } from "@tauri-apps/api/window";
 import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
-import { relaunch } from "@tauri-apps/plugin-process";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { check, type Update } from "@tauri-apps/plugin-updater";
 import { DateTime } from "luxon";
 import { bindEditor } from "./editor.ts";
@@ -737,20 +737,27 @@ async function checkForUpdate(): Promise<void> {
   setUpdateStatus(`Version ${pendingUpdate.version} is available.`);
   document.querySelector("#update-install")?.removeAttribute("hidden");
   const text = document.querySelector("#update-dialog-text");
-  if (text) text.textContent = `Version ${pendingUpdate.version} is ready. It installs and restarts.`;
+  if (text) text.textContent = `Version ${pendingUpdate.version} is ready. The setup opens in the browser. Close this app, then run it. If it asks, do not choose uninstall.`;
   const dialog = document.querySelector<HTMLDialogElement>("#update-dialog");
   if (dialog && !dialog.open) dialog.showModal();
 }
 
 async function installUpdate(): Promise<void> {
   if (!pendingUpdate) return;
-  setUpdateStatus("Installing…");
-  try {
-    await pendingUpdate.downloadAndInstall();
-    await relaunch();
-  } catch (error) {
-    setUpdateStatus(`Install failed. ${error}`);
-  }
+  const url = setupUrl(pendingUpdate.rawJson);
+  setUpdateStatus(url ? "Opening the setup. Close this app, then finish it. Do not choose uninstall." : "Could not find the setup.");
+  document.querySelector<HTMLDialogElement>("#update-dialog")?.close();
+  if (!url) return;
+  await openUrl(url);
+}
+
+function setupUrl(raw: Record<string, unknown>): string | null {
+  const platforms = raw.platforms;
+  if (!platforms || typeof platforms !== "object") return null;
+  const windows = (platforms as Record<string, unknown>)["windows-x86_64"];
+  if (!windows || typeof windows !== "object") return null;
+  const url = (windows as Record<string, unknown>).url;
+  return typeof url === "string" && url.startsWith("https://") ? url : null;
 }
 
 async function applyChrome(): Promise<void> {
