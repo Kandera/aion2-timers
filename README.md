@@ -2,7 +2,7 @@
 
 Desktop timers for Aion 2 events, bosses, and your own field bosses. The overlay follows what you pin in the editor.
 
-It does not read the game client, packets, or memory. V:0.1.9 by Kandera. Licensed under MIT.
+It does not read the game client, packets, or memory. V:0.1.10 by Kandera. Licensed under MIT.
 
 ## Install
 
@@ -11,6 +11,11 @@ Download the Windows setup from the [latest release](https://github.com/Kandera/
 Settings → Updates checks GitHub for a newer signed setup. When one is available, the app shows a dialog, then installs it and restarts.
 
 Timers, pins, and settings are stored in an app data file, so an update does not clear them.
+
+## 0.1.10
+
+- Interval timers keep the Berlin hour on the fallback day. At 21:32 Watcher Kaira is 22:00, not 00:00.
+- Nahma is 21:05. The executors are 21:35.
 
 ## 0.1.9
 
