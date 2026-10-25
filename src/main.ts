@@ -907,7 +907,7 @@ function clockWarning(now: DateTime): string {
   if (diffHours !== 0) lines.push(`Server zone and this PC differ by ${Math.abs(diffHours)} h.`);
   const berlin = now.setZone("Europe/Berlin");
   if (state.settings.timeZone === "Europe/Berlin" && berlin.month === 10 && berlin.day >= 22 && berlin.day <= 28) {
-    lines.push("25 October: Berlin clocks fall back. Daily reset stays 07:00 UTC. Check both clocks against the game.");
+    lines.push("25 October fallback is in. Server events keep the Berlin hour. Daily reset is 08:00.");
   }
   return lines.join(" ");
 }

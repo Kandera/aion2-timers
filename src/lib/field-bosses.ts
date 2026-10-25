@@ -16,6 +16,8 @@ export type FieldReport = {
   location: string;
   nextAt: string | null;
   up: boolean;
+  /** Predicted time came from a report old enough that maintenance can have moved it. */
+  stale: boolean;
 };
 
 const catalog = new Map<number, BossName>();
@@ -32,9 +34,14 @@ export function reportsFromFeed(value: unknown, nowMs = Date.now()): FieldReport
       const known = catalog.get(entry.bossCode);
       if (!known || isFixedWorldBoss(known.name)) continue;
       const up = entry.spawned === true;
+      const stale = entry.observedAt > 0 && nowMs - entry.observedAt > 2 * 60 * 60_000;
       const nextAt = !up && entry.targetAt > 0 ? new Date(entry.targetAt).toISOString() : null;
+      if (!up && stale && entry.targetAt < nowMs + 30 * 60_000) {
+        reports.push({ ...known, nextAt: null, up: false, stale: true });
+        continue;
+      }
       if (!up && entry.targetAt > 0 && entry.targetAt < nowMs - 6 * 60 * 60_000) continue;
-      reports.push({ ...known, nextAt, up });
+      reports.push({ ...known, nextAt, up, stale: false });
     }
   }
   return reports;
@@ -48,7 +55,9 @@ export function applyFieldReports(timers: Timer[], reports: FieldReport[], leadM
     const id = `nm-${MARCHUTAN}-${report.code}`;
     const existing = byId.get(id);
     const name = fieldBossName(report, reports);
-    const note = [report.zone, report.location, report.up ? "Reported up" : ""].filter(Boolean).join(" · ");
+    const note = [report.zone, report.location, report.up ? "Reported up" : "", report.stale ? "Report is too old" : ""]
+      .filter(Boolean)
+      .join(" · ");
     if (!existing) {
       const created = fieldTimer(id, report, name, note, leadMinutes);
       next.push(created);
@@ -61,7 +70,7 @@ export function applyFieldReports(timers: Timer[], reports: FieldReport[], leadM
       ...existing,
       name,
       note,
-      nextAt: report.nextAt ?? existing.nextAt,
+      nextAt: report.stale ? null : (report.nextAt ?? existing.nextAt),
     };
   }
   return next.filter((timer) => !isDuplicateWorldBoss(timer));
@@ -134,6 +143,7 @@ function findServer(value: unknown, serverId: number): { maps: FeedMap[] } | nul
           bossCode: entry.bossCode,
           targetAt: entry.targetAt,
           spawned: entry.spawned === true,
+          observedAt: typeof entry.observedAtMs === "number" ? entry.observedAtMs : 0,
         });
       }
       maps.push({ entries });
@@ -157,5 +167,5 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return value != null && typeof value === "object" && !Array.isArray(value);
 }
 
-type FeedEntry = { bossCode: number; targetAt: number; spawned: boolean };
+type FeedEntry = { bossCode: number; targetAt: number; spawned: boolean; observedAt: number };
 type FeedMap = { entries: FeedEntry[] };

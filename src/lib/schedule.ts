@@ -313,15 +313,8 @@ function justStarted(timer: Timer, now: DateTime, zone: string): DateTime | null
 function nextFixed(now: DateTime, schedule: Schedule): DateTime | null {
   switch (schedule.kind) {
     case "hourly":
-      return stepAfter(now, now.set({ minute: schedule.minute, second: 0, millisecond: 0 }), 60);
     case "every":
-      return schedule.hours < 1
-        ? null
-        : stepAfter(
-            now,
-            now.startOf("day").set({ hour: schedule.anchorHour, minute: schedule.anchorMinute, second: 0, millisecond: 0 }),
-            schedule.hours * 60,
-          );
+      return clockSlots(now, schedule).find((start) => start > now) ?? null;
     case "daily":
       return nextOnDays(now, [1, 2, 3, 4, 5, 6, 7], schedule.hour, schedule.minute);
     case "weekdays":
@@ -336,9 +329,10 @@ function nextFixed(now: DateTime, schedule: Schedule): DateTime | null {
 function previousFixed(now: DateTime, schedule: Schedule): DateTime | null {
   switch (schedule.kind) {
     case "hourly":
-      return stepAfter(now, now.set({ minute: schedule.minute, second: 0, millisecond: 0 }), 60).minus({ hours: 1 });
-    case "every":
-      return schedule.hours < 1 ? null : nextFixed(now, schedule)?.minus({ hours: schedule.hours }) ?? null;
+    case "every": {
+      const past = clockSlots(now, schedule).filter((start) => start <= now);
+      return past.length > 0 ? past[past.length - 1] : null;
+    }
     case "daily":
       return previousOnDays(now, [1, 2, 3, 4, 5, 6, 7], schedule.hour, schedule.minute);
     case "weekdays":
@@ -350,10 +344,13 @@ function previousFixed(now: DateTime, schedule: Schedule): DateTime | null {
   }
 }
 
-function stepAfter(now: DateTime, anchor: DateTime, stepMinutes: number): DateTime {
-  const step = stepMinutes * 60_000;
-  const jumps = Math.floor((now.toMillis() - anchor.toMillis()) / step) + 1;
-  return anchor.plus({ milliseconds: jumps * step });
+/** Wall-clock slots, not millisecond steps. A fallback day is 25 hours; absolute steps land an hour early. */
+function clockSlots(now: DateTime, schedule: Schedule): DateTime[] {
+  if (schedule.kind === "every" && schedule.hours < 1) return [];
+  const origin = now.startOf("day").minus({ days: 1 });
+  const starts: DateTime[] = [];
+  for (let day = 0; day < 3; day += 1) starts.push(...startsOn(origin.plus({ days: day }), schedule));
+  return starts.filter((start) => start.isValid).sort((left, right) => left.toMillis() - right.toMillis());
 }
 
 function nextOnDays(now: DateTime, days: Weekday[], hour: number, minute: number): DateTime | null {

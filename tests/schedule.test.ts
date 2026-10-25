@@ -22,6 +22,7 @@ test("catalog timers resolve on a Wednesday afternoon", () => {
   assert.equal(now.weekday, 3);
   const expected: Record<string, string> = {
     "shugo-festival": "2026-10-14T15:00:00",
+    "black-cloud-merchant": "2026-10-14T15:00:00",
     "dimensional-invasion": "2026-10-14T14:30:00",
     "spacetime-rift": "2026-10-14T17:00:00",
     "arena-of-tactics": "2026-10-14T19:00:00",
@@ -65,10 +66,11 @@ test("shugo start counts the entry window, not the open duration", () => {
 test("arena windows and the overnight gap", () => {
   const live = evaluate(timer("arena-of-tactics"), at("2026-10-14T12:00:00"), zone);
   assert.equal(live.phase, "live");
-  assert.equal(live.target?.toISO(), at("2026-10-14T14:00:00").toISO());
+  assert.equal(live.target?.toISO(), at("2026-10-14T13:00:00").toISO());
 
-  const next = evaluate(timer("arena-of-tactics"), at("2026-10-14T15:00:00"), zone);
-  assert.equal(next.start?.toISO(), at("2026-10-14T19:00:00").toISO());
+  const closed = evaluate(timer("arena-of-tactics"), at("2026-10-14T13:09:00"), zone);
+  assert.equal(closed.phase, "upcoming");
+  assert.equal(closed.start?.toISO(), at("2026-10-14T19:00:00").toISO());
 
   const overnight = evaluate(timer("arena-of-tactics"), at("2026-10-14T21:30:00"), zone);
   assert.equal(overnight.start?.toISO(), at("2026-10-15T11:00:00").toISO());
@@ -87,6 +89,22 @@ test("a Berlin wall-clock event follows the fallback", () => {
 
   const afterFallback = evaluate(daily, at("2026-10-24T17:00:00"), zone);
   assert.equal(afterFallback.start?.toUTC().toISO(), "2026-10-25T15:00:00.000Z");
+});
+
+test("interval timers keep the Berlin hour after the fallback", () => {
+  const now = at("2026-10-25T13:09:00");
+  const kaira = evaluate(timer("watcher-kaira"), now, zone);
+  assert.equal(kaira.phase, "live");
+  assert.equal(kaira.start?.toFormat("HH:mm"), "13:00");
+  assert.equal(kaira.target?.toFormat("HH:mm"), "13:30");
+
+  const rift = evaluate(timer("spacetime-rift"), now, zone);
+  assert.equal(rift.phase, "upcoming");
+  assert.equal(rift.start?.toFormat("HH:mm"), "14:00");
+
+  const shugo = evaluate(timer("shugo-festival"), now, zone);
+  assert.equal(shugo.phase, "upcoming");
+  assert.equal(shugo.start?.toFormat("HH:mm"), "14:00");
 });
 
 test("a Berlin wall-clock event follows the spring forward", () => {

@@ -147,6 +147,38 @@ test("the first load drops pasted tests and old pulled field bosses", () => {
   assert.deepEqual(visible, ["nm-2305-1", "nm-2305-3"]);
 });
 
+test("a pre-maintenance field boss report does not keep a passed prediction", () => {
+  const shot = Date.parse("2026-10-25T12:00:44.000Z");
+  const reports = reportsFromFeed(
+    {
+      servers: [
+        {
+          serverId: 2305,
+          maps: [
+            {
+              entries: [
+                { bossCode: 2400800, targetAt: Date.parse("2026-10-25T12:06:23.000Z"), observedAtMs: Date.parse("2026-10-25T00:30:20.000Z") },
+                { bossCode: 2400854, targetAt: Date.parse("2026-10-25T15:05:55.000Z"), observedAtMs: Date.parse("2026-10-25T12:03:13.000Z") },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    shot,
+  );
+  const gartua = reports.find((report) => report.code === 2400800);
+  const kashapa = reports.find((report) => report.code === 2400854);
+  assert.equal(gartua?.stale, true);
+  assert.equal(gartua?.nextAt, null);
+  assert.equal(kashapa?.stale, false);
+  assert.equal(kashapa?.nextAt, "2026-10-25T15:05:55.000Z");
+  const existing = boss("nm-2305-2400800", "Immortal Gartua", true, true);
+  existing.nextAt = "2026-10-25T12:06:23.000Z";
+  const timers = applyFieldReports([existing], reports, 5);
+  assert.equal(timers.find((timer) => timer.id === "nm-2305-2400800")?.nextAt, null);
+});
+
 function boss(
   id: string,
   name: string,

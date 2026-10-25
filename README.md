@@ -20,6 +20,12 @@ Timers, pins, and settings are stored in an app data file, so an update does not
 
 - After an event starts, the countdown and the start alert show the time left to enter. Shugo Festival is 3 minutes.
 
+## Schedule
+
+- Interval timers keep the Berlin hour after the 25 October fallback. Watcher Kaira is 01:00, 04:00, 07:00… The rift is 02:00, 05:00, 08:00…
+- Watcher Kaira stays up 30 minutes. Arena of Tactics closes at 13:00. Black Cloud Merchant refreshes every hour.
+- A field-boss report from before the clock-change maintenance is dropped once its predicted time has passed. Refresh field bosses after the meter sees them again.
+
 ## 0.1.7
 
 - Argo, the Spirit King in the Abyss is a field boss. A down report shows a timer. Fixed world bosses stay on their own timers.

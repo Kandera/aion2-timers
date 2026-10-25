@@ -9,6 +9,15 @@
     "note": "3 min to enter."
   },
   {
+    "id": "black-cloud-merchant",
+    "name": "Black Cloud Merchant",
+    "category": "system",
+    "schedule": { "kind": "hourly", "minute": 0 },
+    "durationMinutes": 0,
+    "entryMinutes": 0,
+    "note": "Refresh."
+  },
+  {
     "id": "dimensional-invasion",
     "name": "Dimensional Invasion",
     "category": "event",
@@ -33,13 +42,13 @@
     "schedule": {
       "kind": "windows",
       "windows": [
-        { "startHour": 11, "startMinute": 0, "endHour": 14, "endMinute": 0 },
+        { "startHour": 11, "startMinute": 0, "endHour": 13, "endMinute": 0 },
         { "startHour": 19, "startMinute": 0, "endHour": 21, "endMinute": 0 }
       ]
     },
     "durationMinutes": 0,
     "entryMinutes": 0,
-    "note": "Open until the window ends."
+    "note": "11:00–13:00 and 19:00–21:00."
   },
   {
     "id": "artifact-siege",
@@ -55,9 +64,9 @@
     "name": "Watcher Kaira",
     "category": "boss",
     "schedule": { "kind": "every", "hours": 3, "anchorHour": 1, "anchorMinute": 0 },
-    "durationMinutes": 0,
+    "durationMinutes": 30,
     "entryMinutes": 0,
-    "note": ""
+    "note": "Up for 30 min."
   },
   {
     "id": "executor-tamasa",

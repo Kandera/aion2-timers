@@ -84,8 +84,8 @@
             </datalist>
             <p id="zone-error" class="error" role="alert"></p>
             <p class="hint">
-              Schedules are wall-clock times in this zone, so the 25 October 2026 fallback is included for Europe/Berlin.
-              If the in-game server clock does not fall back, switch the zone. Etc/GMT-2 is fixed UTC+2. The sign is inverted.
+              EU server time is this zone's wall clock. After 25 October the local hour stays the same. Daily reset is 08:00.
+              Etc/GMT-2 is fixed UTC+2. Use it only if the in-game clock still shows summer time. The sign is inverted.
             </p>
           </section>
           <section>
@@ -191,6 +191,12 @@
             <p>Ships in the 0.1.8 installer.</p>
             <ul>
               <li>After an event starts, the countdown and the start alert show the time left to enter. Shugo Festival is 3 minutes.</li>
+            </ul>
+            <h2>Schedule</h2>
+            <ul>
+              <li>Interval timers keep the Berlin hour after the 25 October fallback. Watcher Kaira is 01:00, 04:00, 07:00… The rift is 02:00, 05:00, 08:00…</li>
+              <li>Watcher Kaira stays up 30 minutes. Arena of Tactics closes at 13:00.</li>
+              <li>A field-boss report from before the clock-change maintenance is dropped once its predicted time has passed.</li>
             </ul>
             <h2>0.1.7</h2>
             <p>Ships in the 0.1.7 installer.</p>
