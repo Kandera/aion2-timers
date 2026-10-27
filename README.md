@@ -2,7 +2,7 @@
 
 Desktop timers for Aion 2 events, bosses, and your own field bosses. The overlay follows what you pin in the editor.
 
-It does not read the game client, packets, or memory. V:0.1.10 by Kandera. Licensed under MIT.
+It does not read the game client, packets, or memory. V:0.1.11 by Kandera. Licensed under MIT.
 
 ## Install
 
@@ -13,6 +13,12 @@ Settings → Updates checks GitHub for a newer signed setup. When one is availab
 Windows Defender can flag a new unsigned setup as a trojan and delete it. That can remove the installed app before the new one is in place. If an update disappears, install the setup from the release page. An exception on one PC does not help anyone else.
 
 Timers, pins, and settings are stored in an app data file, so an update does not clear them.
+
+## 0.1.11
+
+- The Edge widget Yustiel button shows that server's field bosses. Pinned events stay. Press it again for Marchutan. Reimport the widget.
+- Altgard or Verteron is on the timer page as well as in Settings.
+- Discord copies that faction's bosses. Verteron is ELYOS Timer Yustiel. Altgard is ASMODIAN Timer Marchutan.
 
 ## 0.1.10
 
@@ -83,7 +89,7 @@ Close the editor window to keep the overlay and alarms in the tray. Quit from th
 
 ## XENEON EDGE
 
-`edge-widget/` is an iCUE widget for the CORSAIR XENEON EDGE. It shows the same pinned timers as the overlay. Killed, Seen, and All / Next 3 / Soon write back to the app. Refresh pulls field bosses, the same as Settings.
+`edge-widget/` is an iCUE widget for the CORSAIR XENEON EDGE. It shows the same pinned timers as the overlay. Killed, Seen, and All / Next 3 / Soon write back to the app. Refresh pulls field bosses, the same as Settings. Yustiel switches the field bosses to that server, for the PvP rift. Press it again for Marchutan.
 
 The app listens on `127.0.0.1:47321` while it is running, including from the tray. iCUE asks to allow that address on import. Approve it. A website cannot read the list: the bridge rejects public web origins.
 

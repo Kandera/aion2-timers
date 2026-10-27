@@ -4,6 +4,7 @@ import { DateTime } from "luxon";
 import { catalog } from "../src/lib/catalog.ts";
 import { dueAlerts, inQuietHours, markSeen, upcomingStarts } from "../src/lib/schedule.ts";
 import { exportTimers, importTimers } from "../src/lib/share.ts";
+import { discordFaction } from "../src/lib/view.ts";
 import { freshState, mergeStores } from "../src/lib/state.ts";
 import type { Timer } from "../src/lib/types.ts";
 
@@ -91,3 +92,58 @@ test("a file store keeps settings and custom timers when the window store was wi
   assert.equal(merged.timers.find((timer) => timer.id === "shugo-festival")?.overlay, false);
   assert.equal(merged.timers.some((timer) => timer.id === "field-gartua"), true);
 });
+test("Discord export names the faction server and keeps the other zone out", () => {
+  const now = DateTime.fromISO("2026-10-27T23:45:00", { zone });
+  const start = DateTime.fromISO("2026-10-27T23:50:00", { zone });
+  const unix = Math.floor(start.toSeconds());
+  const text = discordFaction(
+    [
+      rolling("nm-1305-1", "Eternal Gartua", "Verteron · Sky Island", start.toUTC().toISO()),
+      rolling("nm-1305-2", "Neikel of the East", "Verteron · Peak · Reported up", null),
+      rolling("nm-1305-3", "Melted Danar", "Altgard · Creion Campsite", start.toUTC().toISO()),
+      {
+        ...rolling("shugo-festival", "Shugo Festival", "", start.toUTC().toISO()),
+        category: "event",
+        schedule: { kind: "daily", hour: 23, minute: 50 },
+      },
+    ],
+    "verteron",
+    now,
+    zone,
+  );
+  assert.match(text, /^\*\*ELYOS Timer Yustiel Stand 27\.10\. 23:45 Uhr\*\*/);
+  assert.match(text, new RegExp(`\\*\\*Eternal Gartua\\*\\* — <t:${unix}:t> \\(<t:${unix}:R>\\) — Sky Island`));
+  assert.match(text, /\*\*Neikel of the East\*\* — Up — Peak/);
+  assert.equal(text.includes("Melted Danar"), false);
+  assert.equal(text.includes("Shugo"), false);
+  const asmo = discordFaction(
+    [rolling("nm-2305-1", "Immortal Gartua", "Altgard · Remote Island", start.toUTC().toISO())],
+    "altgard",
+    now,
+    zone,
+  );
+  assert.match(asmo, /^\*\*ASMODIAN Timer Marchutan Stand 27\.10\. 23:45 Uhr\*\*/);
+  assert.match(asmo, /Immortal Gartua/);
+});
+
+function rolling(id: string, name: string, note: string, nextAt: string | null): Timer {
+  return {
+    id,
+    name,
+    category: "boss",
+    schedule: { kind: "rolling" },
+    durationMinutes: 0,
+    entryMinutes: 0,
+    overlay: false,
+    alarm: false,
+    leadMinutes: 5,
+    seeded: false,
+    customized: true,
+    respawnIntervalMinutes: null,
+    nextAt,
+    alarmTone: null,
+    alarmOnStart: true,
+    seenUntil: null,
+    note,
+  };
+}

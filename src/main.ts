@@ -9,14 +9,14 @@ import { bindEditor } from "./editor.ts";
 import { esc } from "./lib/html.ts";
 import { pullCatalog } from "./lib/catalog.ts";
 import { applySpawns, parseSpawns } from "./lib/paste.ts";
-import { applyFieldReports, pullFieldReports } from "./lib/field-bosses.ts";
+import { applyFieldReports, pullFieldFeed, reportsFromFeed, YUSTIEL } from "./lib/field-bosses.ts";
 import { alertsFrom, evaluate, inQuietHours, markKilled, markSeen, zoneOk, type Occurrence } from "./lib/schedule.ts";
 import { exportTimers, importTimers } from "./lib/share.ts";
 import { playAlert, unlockSound } from "./lib/sound.ts";
 import { loadState, mergeCatalog, mergeStores, parseState, resetToCatalog, saveState } from "./lib/state.ts";
 import type { AppState, OverlayList, Timer } from "./lib/types.ts";
 import { formatClock, formatCountdown, formatWhen } from "./lib/format.ts";
-import { ordered, passesFilter, present, rankValue, shownTimers, type RowView } from "./lib/view.ts";
+import { discordFaction, ordered, passesFilter, present, rankValue, shownTimers, type RowView } from "./lib/view.ts";
 import { edgeSnapshot } from "./lib/edge.ts";
 
 type Filter = "all" | "event" | "world" | "field" | "pvp" | "system";
@@ -38,6 +38,8 @@ let state: AppState = loadState();
 let catalogBusy = false;
 let fieldBossBusy = false;
 let edgeRefreshing = false;
+let edgeRift = false;
+let riftTimers: Timer[] = [];
 let filter: Filter = "all";
 let listKey = "";
 let capturing = false;
@@ -91,6 +93,9 @@ document.querySelector("#nav-settings")?.addEventListener("click", () => showPag
 document.querySelector("#add-timer")?.addEventListener("click", () => editor?.open(null, state.settings.defaultLeadMinutes));
 document.querySelector("#paste-spawn")?.addEventListener("click", () => {
   void pasteSpawn();
+});
+document.querySelector("#discord-export")?.addEventListener("click", () => {
+  void copyDiscord();
 });
 document.querySelector("#catalog-refresh")?.addEventListener("click", () => {
   void refreshCatalog(false);
@@ -200,22 +205,23 @@ function renderFilters(): void {
 }
 
 function renderFieldZone(): void {
-  const node = document.querySelector<HTMLElement>("#field-zone");
-  if (!node) return;
   const current = state.settings.fieldZone;
-  node.innerHTML = (["altgard", "verteron"] as const)
+  const html = (["altgard", "verteron"] as const)
     .map((zone) => `<button type="button" data-zone="${zone}" aria-pressed="${current === zone}">${zone === "altgard" ? "Altgard" : "Verteron"}</button>`)
     .join("");
-  node.querySelectorAll("button").forEach((button) => {
-    button.addEventListener("click", () => {
-      const zone = button.dataset.zone;
-      if (zone !== "altgard" && zone !== "verteron") return;
-      state.settings.fieldZone = zone;
-      commit();
-      renderFieldZone();
-      renderList();
+  for (const node of document.querySelectorAll<HTMLElement>("[data-field-zone]")) {
+    node.innerHTML = html;
+    node.querySelectorAll("button").forEach((button) => {
+      button.addEventListener("click", () => {
+        const zone = button.dataset.zone;
+        if (zone !== "altgard" && zone !== "verteron") return;
+        state.settings.fieldZone = zone;
+        commit();
+        renderFieldZone();
+        renderList();
+      });
     });
-  });
+  }
 }
 
 function renderList(): void {
@@ -571,6 +577,11 @@ async function boot(): Promise<void> {
   await listen("edge-refresh-bosses", () => {
     void refreshFieldBosses(false);
   });
+  await listen("edge-rift", () => {
+    edgeRift = !edgeRift;
+    publishEdge();
+    if (edgeRift && riftTimers.length === 0) void refreshFieldBosses(false);
+  });
   await listen<{ id: string }>("timer-seen", (event) => {
     const timer = state.timers.find((item) => item.id === event.payload.id);
     if (!timer) return;
@@ -680,8 +691,11 @@ async function refreshFieldBosses(quiet: boolean): Promise<void> {
   if (status) status.textContent = "Updating…";
   if (button) button.disabled = true;
   try {
-    const reports = await pullFieldReports();
+    const feed = await pullFieldFeed();
+    const nowMs = Date.now();
+    const reports = reportsFromFeed(feed, nowMs);
     const before = state.timers.length;
+    riftTimers = applyFieldReports([], reportsFromFeed(feed, nowMs, YUSTIEL), state.settings.defaultLeadMinutes, YUSTIEL);
     state.timers = applyFieldReports(state.timers, reports, state.settings.defaultLeadMinutes);
     const added = state.timers.length - before;
     state.settings.fieldBossesUpdatedAt = new Date().toISOString();
@@ -842,11 +856,24 @@ function nextList(current: OverlayList): OverlayList {
 }
 
 function publishEdge(now = DateTime.now()): void {
-  void emit("edge-snapshot", edgeSnapshot(state, now, edgeRefreshing)).catch(() => {});
+  void emit("edge-snapshot", edgeSnapshot(state, now, edgeRefreshing, { on: edgeRift, timers: riftTimers })).catch(() => {});
 }
 
 function isOverlayList(value: string): value is OverlayList {
   return value === "all" || value === "next3" || value === "soon";
+}
+
+async function copyDiscord(): Promise<void> {
+  const status = document.querySelector("#paste-status");
+  const elyos = state.settings.fieldZone === "verteron";
+  if (elyos && riftTimers.length === 0) await refreshFieldBosses(true);
+  const text = discordFaction(elyos ? riftTimers : state.timers, state.settings.fieldZone, DateTime.now(), state.settings.timeZone);
+  try {
+    await navigator.clipboard.writeText(text);
+    if (status) status.textContent = elyos ? "Copied Yustiel bosses." : "Copied Marchutan bosses.";
+  } catch {
+    if (status) status.textContent = "Could not copy.";
+  }
 }
 
 function exportList(): void {

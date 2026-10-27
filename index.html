@@ -24,7 +24,7 @@
           <button type="button" id="nav-timers" aria-current="page">Timers</button>
           <button type="button" id="nav-settings">Settings</button>
         </nav>
-        <p class="rail-note">Does not read the game client.<br />V:0.1.10 by Kandera</p>
+        <p class="rail-note">Does not read the game client.<br />V:0.1.11 by Kandera</p>
       </aside>
       <section class="stage">
         <header class="top" data-tauri-drag-region>
@@ -49,8 +49,10 @@
         <div id="timers-page">
           <div class="toolbar">
             <div class="filters" id="filters" role="tablist" aria-label="Category"></div>
+            <div class="filters" data-field-zone role="group" aria-label="Field boss zone"></div>
             <div class="toolbar-actions">
               <button type="button" id="paste-spawn">Paste spawn</button>
+              <button type="button" id="discord-export">Discord</button>
               <!-- Export and import stay in the code. Uncomment these to bring them back.
               <button type="button" id="export-timers">Export</button>
               <button type="button" id="import-timers">Import</button>
@@ -128,7 +130,7 @@
               <input id="field-boss-minutes" type="number" min="1" max="60" />
             </label>
             <label class="field">Field bosses
-              <span class="filters" id="field-zone" role="group" aria-label="Field boss zone"></span>
+              <span class="filters" id="field-zone" data-field-zone role="group" aria-label="Field boss zone"></span>
             </label>
             <p class="hint">Altgard or Verteron. The other faction stays saved. Fixed world bosses are not listed here.</p>
             <p class="hint">Pulls catalog.json from the repo. Refresh replaces seeded schedules. Pins, alarms, notes, and your own timers stay.</p>
@@ -147,7 +149,7 @@
                 <option value="soon">Live and under 15 min</option>
               </select>
             </label>
-            <p class="hint">XENEON EDGE uses these pins. Medium replaces the weather tile. Large spans the two right tiles.</p>
+            <p class="hint">XENEON EDGE uses these pins. Yustiel on the widget shows that server's field bosses. Medium replaces the weather tile. Large spans the two right tiles.</p>
             <label class="field">Monitor
               <select id="overlay-monitor">
                 <option value="">Current position</option>
@@ -182,6 +184,13 @@
           </section>
         </form>
           <article id="changelog-page" class="sheet" hidden>
+            <h2>0.1.11</h2>
+            <p>Ships in the 0.1.11 installer.</p>
+            <ul>
+              <li>The Edge widget Yustiel button shows that server's field bosses. Pinned events stay. Press it again for Marchutan. Reimport the widget.</li>
+              <li>Altgard or Verteron is on the timer page as well as in Settings.</li>
+              <li>Discord copies that faction's bosses. Verteron is ELYOS Timer Yustiel. Altgard is ASMODIAN Timer Marchutan. The header is the server time, Stand 27.10. 23:45 Uhr.</li>
+            </ul>
             <h2>0.1.10</h2>
             <p>Ships in the 0.1.10 installer.</p>
             <ul>
@@ -268,7 +277,7 @@
             <p>Import reads that file. A matching name is updated. A new name is added. Catalog timers stay as they are.</p>
             -->
             <h2>Field bosses</h2>
-            <p>Field bosses start off. Turn on overlay or alarm for the ones you want. That choice stays across updates. Settings, Catalog, Altgard or Verteron hides the other faction. Fixed world bosses stay on their own timers and are not listed again as field bosses. Argo, the Spirit King in the Abyss is a field boss. A down report shows a timer. Refresh shows Updating, then Current and the last updated time. Field bosses can refresh every few minutes. A boss reported up keeps its last spawn time. Also alert when it starts sounds again at the start. A timer can turn that off in the editor.</p>
+            <p>Field bosses start off. Turn on overlay or alarm for the ones you want. That choice stays across updates. Settings, Catalog, Altgard or Verteron hides the other faction. Fixed world bosses stay on their own timers and are not listed again as field bosses. Argo, the Spirit King in the Abyss is a field boss. A down report shows a timer. Refresh shows Updating, then Current and the last updated time. Field bosses can refresh every few minutes. A boss reported up keeps its last spawn time. Also alert when it starts sounds again at the start. A timer can turn that off in the editor. The Edge widget Yustiel button shows Yustiel field bosses for the PvP rift. Press it again for Marchutan.</p>
           </article>
         </div>
       </section>

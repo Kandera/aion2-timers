@@ -65,6 +65,7 @@ fn handle_client(stream: &mut TcpStream, app: &AppHandle, snapshot: &Mutex<Strin
             Action::Seen(id) => app.emit("timer-seen", serde_json::json!({ "id": id })),
             Action::List => app.emit("overlay-compact", ()),
             Action::Bosses => app.emit("edge-refresh-bosses", ()),
+            Action::Rift => app.emit("edge-rift", ()),
         };
     }
     write_response(stream, reply.status, request.origin.as_deref(), &reply.body)
@@ -90,6 +91,7 @@ enum Action {
     Seen(String),
     List,
     Bosses,
+    Rift,
 }
 
 fn respond(request: &Request, snapshot: &str) -> Reply {
@@ -120,6 +122,7 @@ fn action_from(body: &str) -> Option<Action> {
     match value.get("type").and_then(|item| item.as_str())? {
         "list" => Some(Action::List),
         "bosses" => Some(Action::Bosses),
+        "rift" => Some(Action::Rift),
         "kill" => Some(Action::Kill(valid_id(value.get("id")?)?)),
         "seen" => Some(Action::Seen(valid_id(value.get("id")?)?)),
         _ => None,
@@ -288,7 +291,7 @@ mod tests {
     }
 
     #[test]
-    fn kill_seen_and_list_are_the_only_actions() {
+    fn known_actions_round_trip() {
         let kill = request("POST", "/v1/action", None, true, r#"{"type":"kill","id":"nm-2305-2"}"#);
         match respond(&kill, "{}").action {
             Some(Action::Kill(id)) => assert_eq!(id, "nm-2305-2"),
@@ -300,6 +303,8 @@ mod tests {
         assert!(matches!(respond(&list, "{}").action, Some(Action::List)));
         let bosses = request("POST", "/v1/action", None, true, r#"{"type":"bosses"}"#);
         assert!(matches!(respond(&bosses, "{}").action, Some(Action::Bosses)));
+        let rift = request("POST", "/v1/action", None, true, r#"{"type":"rift"}"#);
+        assert!(matches!(respond(&rift, "{}").action, Some(Action::Rift)));
         let bad = request("POST", "/v1/action", None, true, r#"{"type":"kill","id":"../state"}"#);
         assert_eq!(respond(&bad, "{}").status, 400);
     }

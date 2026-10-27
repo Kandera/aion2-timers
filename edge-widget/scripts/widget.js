@@ -12,6 +12,8 @@ const status = document.querySelector("#status");
 const clock = document.querySelector("#clock");
 const mode = document.querySelector("#mode");
 const refresh = document.querySelector("#refresh");
+const rift = document.querySelector("#rift");
+const kicker = document.querySelector("#kicker");
 
 let started = false;
 let pulling = false;
@@ -92,6 +94,8 @@ function showSnapshot(data, stale) {
   clock.textContent = data.clock || "--:--:--";
   mode.textContent = data.listLabel || "All";
   mode.setAttribute("aria-pressed", String(data.overlayList !== "all"));
+  if (rift) rift.setAttribute("aria-pressed", String(data.rift === true));
+  if (kicker) kicker.textContent = data.rift ? "Yustiel" : "Aion 2";
   if (refresh) {
     const busy = data.refreshing === true;
     refresh.textContent = busy ? "…" : "Refresh";
@@ -183,6 +187,10 @@ function onClick(event) {
   }
   if (button.id === "refresh") {
     void act("bosses");
+    return;
+  }
+  if (button.id === "rift") {
+    void act("rift");
     return;
   }
   if (button.dataset.act && button.dataset.id) void act(button.dataset.act, button.dataset.id);

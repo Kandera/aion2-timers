@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { DateTime } from "luxon";
-import { applyFieldReports, reportsFromFeed } from "../src/lib/field-bosses.ts";
+import { applyFieldReports, reportsFromFeed, YUSTIEL } from "../src/lib/field-bosses.ts";
 import { parseState } from "../src/lib/state.ts";
 import type { Timer } from "../src/lib/types.ts";
 import { ordered, shownTimers } from "../src/lib/view.ts";
@@ -59,6 +59,25 @@ test("a Marchutan report becomes a named timer and keeps an interval", () => {
   assert.equal(added?.overlay, false);
   assert.equal(added?.alarm, false);
   assert.equal(added?.tracked, false);
+});
+test("a Yustiel report is server 1305 and does not reuse a Marchutan timer", () => {
+  const feed = {
+    servers: [
+      {
+        serverId: 2305,
+        maps: [{ entries: [{ bossCode: 2400800, targetAt: now + 60_000, spawned: false, observedAtMs: now }] }],
+      },
+      {
+        serverId: YUSTIEL,
+        maps: [{ entries: [{ bossCode: 2100003, targetAt: now + 120_000, spawned: true, observedAtMs: now }] }],
+      },
+    ],
+  };
+  assert.equal(reportsFromFeed(feed, now).some((report) => report.name === "Neikel of the East"), false);
+  const yustiel = reportsFromFeed(feed, now, YUSTIEL);
+  assert.equal(yustiel.find((report) => report.name === "Neikel of the East")?.up, true);
+  assert.equal(yustiel.some((report) => report.name === "Immortal Gartua"), false);
+  assert.equal(applyFieldReports([], yustiel, 5, YUSTIEL)[0]?.id, "nm-1305-2100003");
 });
 
 test("a down Abyss field boss is a timer, a fixed world boss is not", () => {

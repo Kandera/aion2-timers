@@ -102,6 +102,46 @@ function fieldBossZone(timer: Timer): "verteron" | "altgard" | null {
   if (/\bAltgard\b/.test(head) && !/\bVerteron\b/.test(head)) return "altgard";
   return null;
 }
+export function discordFaction(
+  timers: Timer[],
+  fieldZone: "verteron" | "altgard",
+  now: DateTime,
+  timeZone: string,
+): string {
+  const elyos = fieldZone === "verteron";
+  const title = elyos ? "ELYOS Timer Yustiel" : "ASMODIAN Timer Marchutan";
+  const stamp = now.setZone(timeZone);
+  const stand = stamp.isValid ? stamp.toFormat("dd.MM. HH:mm") : "--.--. --:--";
+  const header = `**${title} Stand ${stand} Uhr**`;
+  const bosses = timers.filter((timer) => isFieldBoss(timer) && !isDuplicateWorldBoss(timer) && factionBoss(timer, fieldZone));
+  if (elyos && bosses.length === 0) return `${header}\nYustiel report is not loaded.`;
+  const lines = bosses
+    .flatMap((timer) => discordLine(timer, now, timeZone))
+    .sort((left, right) => left.rank - right.rank || left.name.localeCompare(right.name));
+  if (lines.length === 0) return `${header}\nNo bosses with a time.`;
+  return [header, ...lines.map((line) => line.text)].join("\n");
+}
+
+function factionBoss(timer: Timer, fieldZone: "verteron" | "altgard"): boolean {
+  const zone = fieldBossZone(timer);
+  return zone == null || zone === fieldZone;
+}
+
+function discordLine(timer: Timer, now: DateTime, timeZone: string): { name: string; text: string; rank: number }[] {
+  const place = timer.note
+    .split(" · ")
+    .map((part) => part.trim())
+    .filter((part) => part && part !== "Altgard" && part !== "Verteron" && part !== "Reported up" && part !== "Report is too old")
+    .join(" · ");
+  const tail = place ? ` — ${place}` : "";
+  if (timer.nextAt == null && timer.note.includes("Reported up")) {
+    return [{ name: timer.name, text: `**${timer.name}** — Up${tail}`, rank: -1 }];
+  }
+  const start = evaluate(timer, now, timeZone).start;
+  if (!start) return [];
+  const unix = Math.floor(start.toSeconds());
+  return [{ name: timer.name, text: `**${timer.name}** — <t:${unix}:t> (<t:${unix}:R>)${tail}`, rank: start.toMillis() }];
+}
 
 function matchesFilter(timer: Timer, filter: ListFilter): boolean {
   if (isDuplicateWorldBoss(timer)) return false;

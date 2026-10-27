@@ -218,6 +218,7 @@ h2 { margin: 0; font-size: 15px; font-weight: 600; }
   justify-content: space-between;
   gap: 12px;
   align-items: center;
+  flex-wrap: wrap;
   padding: 8px 28px 12px;
 }
 

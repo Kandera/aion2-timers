@@ -6,7 +6,7 @@
       "Text": "Text",
       "Accent": "Accent",
       "Background": "Background",
-      "Edge help": "Same pins as the overlay. Medium replaces the weather tile. Large spans the two right tiles."
+      "Edge help": "Same pins as the overlay. Yustiel shows that server's field bosses. Medium replaces the weather tile. Large spans the two right tiles."
     }
   },
   "de": {
@@ -16,7 +16,7 @@
       "Text": "Text",
       "Accent": "Akzent",
       "Background": "Hintergrund",
-      "Edge help": "Dieselben Pins wie das Overlay. Medium ersetzt das Wetter-Tile. Large spannt die zwei rechten Tiles."
+      "Edge help": "Dieselben Pins wie das Overlay. Yustiel zeigt die Feld-Bosse dieses Servers. Medium ersetzt das Wetter-Tile. Large spannt die zwei rechten Tiles."
     }
   }
 }

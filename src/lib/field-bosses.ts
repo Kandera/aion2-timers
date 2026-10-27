@@ -5,7 +5,8 @@ import type { Timer } from "./types.ts";
 export const FIELD_BOSS_URL =
   "https://raw.githubusercontent.com/Not4You-Dev/NotMeter-Cache/main/presence/notmeter-field-boss-public-ww-eu-expanded.json";
 
-const MARCHUTAN = 2305;
+export const MARCHUTAN = 2305;
+export const YUSTIEL = 1305;
 
 type BossName = { code: number; name: string; zone: string; location: string };
 
@@ -25,8 +26,8 @@ for (const row of names) {
   if (isBossName(row)) catalog.set(row.code, row);
 }
 
-export function reportsFromFeed(value: unknown, nowMs = Date.now()): FieldReport[] {
-  const server = findServer(value, MARCHUTAN);
+export function reportsFromFeed(value: unknown, nowMs = Date.now(), serverId = MARCHUTAN): FieldReport[] {
+  const server = findServer(value, serverId);
   if (!server) return [];
   const reports: FieldReport[] = [];
   for (const map of server.maps) {
@@ -47,12 +48,12 @@ export function reportsFromFeed(value: unknown, nowMs = Date.now()): FieldReport
   return reports;
 }
 
-export function applyFieldReports(timers: Timer[], reports: FieldReport[], leadMinutes: number): Timer[] {
+export function applyFieldReports(timers: Timer[], reports: FieldReport[], leadMinutes: number, serverId = MARCHUTAN): Timer[] {
   const next = timers.map((timer) => ({ ...timer }));
   const byId = new Map(next.map((timer) => [timer.id, timer]));
   for (const report of reports) {
     if (isFixedWorldBoss(report.name)) continue;
-    const id = `nm-${MARCHUTAN}-${report.code}`;
+    const id = `nm-${serverId}-${report.code}`;
     const existing = byId.get(id);
     const name = fieldBossName(report, reports);
     const note = [report.zone, report.location, report.up ? "Reported up" : "", report.stale ? "Report is too old" : ""]
@@ -76,10 +77,14 @@ export function applyFieldReports(timers: Timer[], reports: FieldReport[], leadM
   return next.filter((timer) => !isDuplicateWorldBoss(timer));
 }
 
-export async function pullFieldReports(): Promise<FieldReport[]> {
+export async function pullFieldFeed(): Promise<unknown> {
   const response = await fetch(FIELD_BOSS_URL);
   if (!response.ok) throw new Error(`Field boss report failed (${response.status}).`);
-  return reportsFromFeed(await response.json());
+  return response.json();
+}
+
+export async function pullFieldReports(): Promise<FieldReport[]> {
+  return reportsFromFeed(await pullFieldFeed());
 }
 
 function fieldTimer(id: string, report: FieldReport, name: string, note: string, leadMinutes: number): Timer {

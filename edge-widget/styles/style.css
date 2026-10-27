@@ -58,7 +58,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 
 .bar { justify-content: space-between; gap: var(--space-gap); flex: 0 0 auto; }
-.bar-actions { gap: calc(var(--space-gap) * 0.7); }
+.bar-actions { gap: calc(var(--space-gap) * 0.7); flex-wrap: wrap; justify-content: flex-end; }
 
 .brand { gap: calc(var(--space-gap) * 1.4); min-width: 0; }
 

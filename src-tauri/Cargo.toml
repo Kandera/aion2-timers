@@ -1,6 +1,6 @@
 [package]
 name = "aion2-timers"
-version = "0.1.10"
+version = "0.1.11"
 description = "Desktop timers and overlay for Aion 2 events. Does not read the game client."
 license = "MIT"
 authors = ["Kandera"]
