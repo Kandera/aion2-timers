@@ -88,7 +88,7 @@ export function edgeSnapshot(state: AppState, now: DateTime, refreshing = false,
   const { shown, later, compactHidden } = rift.on ? selectRift(state, now, rift.timers) : selectOverlay(state, now);
   const clock = now.setZone(zone);
   const notes = [
-    rift.on ? "Yustiel field bosses." : "",
+    rift.on ? "Rift Nezekan. Abyss Vaizel." : "",
     compactHidden > 0 ? `${compactHidden} more hidden by compact.` : "",
     later > 0 ? `${later} later, outside ${hours} h.` : "",
   ].filter(Boolean);
@@ -139,9 +139,9 @@ function riftOccurrence(timer: Timer, now: DateTime, zone: string): Occurrence {
 
 function emptyCopy(shown: number, later: number, hours: number, rift: EdgeRift): string {
   if (shown > 0) return "";
-  if (rift.on && rift.timers.length === 0) return "Yustiel report is not loaded.";
+  if (rift.on && rift.timers.length === 0) return "Elyos report is not loaded.";
   if (later > 0) return `Nothing due in the next ${hours} h.`;
-  return rift.on ? "No Yustiel bosses in the report." : "No timers on the overlay.";
+  return rift.on ? "No Elyos bosses in the report." : "No timers on the overlay.";
 }
 
 function riftRow(timer: Timer, occurrence: Occurrence, zone: string): EdgeRow {

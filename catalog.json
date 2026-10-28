@@ -72,37 +72,37 @@
     "id": "executor-tamasa",
     "name": "Executor Tamasa",
     "category": "boss",
-    "schedule": { "kind": "weekdays", "days": [1, 4, 6], "hour": 21, "minute": 35 },
+    "schedule": { "kind": "weekdays", "days": [1, 4, 6], "hour": 21, "minute": 40 },
     "durationMinutes": 0,
     "entryMinutes": 0,
-    "note": "Map countdown is 21:35."
+    "note": "Map countdown is 21:40."
   },
   {
     "id": "executor-argo",
     "name": "Executor Argo",
     "category": "boss",
-    "schedule": { "kind": "weekdays", "days": [1, 4, 6], "hour": 21, "minute": 35 },
+    "schedule": { "kind": "weekdays", "days": [1, 4, 6], "hour": 21, "minute": 40 },
     "durationMinutes": 0,
     "entryMinutes": 0,
-    "note": "Map countdown is 21:35."
+    "note": "Map countdown is 21:40."
   },
   {
     "id": "executor-kaira",
     "name": "Executor Kaira",
     "category": "boss",
-    "schedule": { "kind": "weekdays", "days": [1, 4, 6], "hour": 21, "minute": 35 },
+    "schedule": { "kind": "weekdays", "days": [1, 4, 6], "hour": 21, "minute": 40 },
     "durationMinutes": 0,
     "entryMinutes": 0,
-    "note": "Map countdown is 21:35."
+    "note": "Map countdown is 21:40."
   },
   {
     "id": "guardian-lord-nahma",
     "name": "Guardian Lord Nahma",
     "category": "boss",
-    "schedule": { "kind": "weekdays", "days": [5, 7], "hour": 21, "minute": 5 },
+    "schedule": { "kind": "weekdays", "days": [5, 7], "hour": 21, "minute": 10 },
     "durationMinutes": 0,
     "entryMinutes": 0,
-    "note": "Map countdown is 21:05. One timer for every location."
+    "note": "Map countdown is 21:10. One timer for every location."
   },
   {
     "id": "daily-reset",

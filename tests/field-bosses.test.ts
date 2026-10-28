@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { DateTime } from "luxon";
-import { applyFieldReports, reportsFromFeed, YUSTIEL } from "../src/lib/field-bosses.ts";
+import { applyEnemyReports, applyFieldReports, enemyFieldReports, reportsFromFeed } from "../src/lib/field-bosses.ts";
 import { parseState } from "../src/lib/state.ts";
 import type { Timer } from "../src/lib/types.ts";
 import { ordered, shownTimers } from "../src/lib/view.ts";
@@ -60,7 +60,7 @@ test("a Marchutan report becomes a named timer and keeps an interval", () => {
   assert.equal(added?.alarm, false);
   assert.equal(added?.tracked, false);
 });
-test("a Yustiel report is server 1305 and does not reuse a Marchutan timer", () => {
+test("rift bosses come from Nezekan and Abyss bosses from Vaizel", () => {
   const feed = {
     servers: [
       {
@@ -68,16 +68,45 @@ test("a Yustiel report is server 1305 and does not reuse a Marchutan timer", () 
         maps: [{ entries: [{ bossCode: 2400800, targetAt: now + 60_000, spawned: false, observedAtMs: now }] }],
       },
       {
-        serverId: YUSTIEL,
-        maps: [{ entries: [{ bossCode: 2100003, targetAt: now + 120_000, spawned: true, observedAtMs: now }] }],
+        serverId: 1305,
+        maps: [{ entries: [{ bossCode: 2100003, targetAt: now + 90_000, spawned: true, observedAtMs: now }] }],
+      },
+      {
+        serverId: 1302,
+        maps: [
+          {
+            entries: [
+              { bossCode: 2100003, targetAt: now + 120_000, spawned: true, observedAtMs: now },
+              { bossCode: 2600068, targetAt: now + 180_000, spawned: false, observedAtMs: now },
+            ],
+          },
+        ],
+      },
+      {
+        serverId: 1303,
+        maps: [
+          {
+            entries: [
+              { bossCode: 2100003, targetAt: now + 150_000, spawned: false, observedAtMs: now },
+              { bossCode: 2600068, targetAt: now + 240_000, spawned: false, observedAtMs: now },
+            ],
+          },
+        ],
       },
     ],
   };
   assert.equal(reportsFromFeed(feed, now).some((report) => report.name === "Neikel of the East"), false);
-  const yustiel = reportsFromFeed(feed, now, YUSTIEL);
-  assert.equal(yustiel.find((report) => report.name === "Neikel of the East")?.up, true);
-  assert.equal(yustiel.some((report) => report.name === "Immortal Gartua"), false);
-  assert.equal(applyFieldReports([], yustiel, 5, YUSTIEL)[0]?.id, "nm-1305-2100003");
+  const parts = enemyFieldReports(feed, now);
+  const nezekan = parts.find((part) => part.serverId === 1302)?.reports ?? [];
+  const vaizel = parts.find((part) => part.serverId === 1303)?.reports ?? [];
+  assert.equal(nezekan.some((report) => report.name === "Neikel of the East"), true);
+  assert.equal(nezekan.some((report) => report.name === "Argo, the Spirit King"), false);
+  assert.equal(vaizel.some((report) => report.name === "Argo, the Spirit King"), true);
+  assert.equal(vaizel.some((report) => report.name === "Neikel of the East"), false);
+  const timers = applyEnemyReports(parts, 5);
+  assert.equal(timers.find((timer) => timer.name === "Neikel of the East")?.id, "nm-1302-2100003");
+  assert.equal(timers.find((timer) => timer.name === "Argo, the Spirit King")?.id, "nm-1303-2600068");
+  assert.equal(timers.some((timer) => timer.id.startsWith("nm-1305-")), false);
 });
 
 test("a down Abyss field boss is a timer, a fixed world boss is not", () => {

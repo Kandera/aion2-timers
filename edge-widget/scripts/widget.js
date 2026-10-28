@@ -95,7 +95,7 @@ function showSnapshot(data, stale) {
   mode.textContent = data.listLabel || "All";
   mode.setAttribute("aria-pressed", String(data.overlayList !== "all"));
   if (rift) rift.setAttribute("aria-pressed", String(data.rift === true));
-  if (kicker) kicker.textContent = data.rift ? "Yustiel" : "Aion 2";
+  if (kicker) kicker.textContent = data.rift ? "Elyos" : "Aion 2";
   if (refresh) {
     const busy = data.refreshing === true;
     refresh.textContent = busy ? "…" : "Refresh";

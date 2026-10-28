@@ -26,7 +26,7 @@ jobs:
         with:
           tagName: v__VERSION__
           releaseName: Aion 2 Timers v__VERSION__
-          releaseBody: Install the Windows setup from the assets. Import aion-2-timers.icuewidget in iCUE. Yustiel on the widget shows that server's field bosses. Refresh pulls field bosses.
+          releaseBody: Install the Windows setup from the assets. Import aion-2-timers.icuewidget in iCUE. Elyos on the widget shows Nezekan rift bosses and Vaizel Abyss bosses. Refresh pulls field bosses.
           releaseDraft: false
           prerelease: false
       - run: npx --yes icuewidget-cli package edge-widget

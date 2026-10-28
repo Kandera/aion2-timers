@@ -28,10 +28,10 @@ test("catalog timers resolve on a Wednesday afternoon", () => {
     "arena-of-tactics": "2026-10-14T19:00:00",
     "artifact-siege": "2026-10-15T21:00:00",
     "watcher-kaira": "2026-10-14T16:00:00",
-    "executor-tamasa": "2026-10-15T21:35:00",
-    "executor-argo": "2026-10-15T21:35:00",
-    "executor-kaira": "2026-10-15T21:35:00",
-    "guardian-lord-nahma": "2026-10-16T21:05:00",
+    "executor-tamasa": "2026-10-15T21:40:00",
+    "executor-argo": "2026-10-15T21:40:00",
+    "executor-kaira": "2026-10-15T21:40:00",
+    "guardian-lord-nahma": "2026-10-16T21:10:00",
     "daily-reset": "2026-10-15T09:00:00",
     "weekly-reset": "2026-10-21T09:00:00",
   };
@@ -107,11 +107,11 @@ test("interval timers keep the Berlin hour after the fallback", () => {
   assert.equal(shugo.start?.toFormat("HH:mm"), "14:00");
 });
 
-test("Nahma matches the map countdown, five minutes after 21:00", () => {
+test("Nahma matches the map countdown, ten minutes after 21:00", () => {
   const now = at("2026-10-25T20:52:00");
   const nahma = evaluate(timer("guardian-lord-nahma"), now, zone);
-  assert.equal(nahma.start?.toFormat("HH:mm"), "21:05");
-  assert.ok(Math.abs((nahma.remainingMs ?? 0) - 13 * 60_000) < 1000);
+  assert.equal(nahma.start?.toFormat("HH:mm"), "21:10");
+  assert.ok(Math.abs((nahma.remainingMs ?? 0) - 18 * 60_000) < 1000);
 });
 
 test("a Berlin wall-clock event follows the spring forward", () => {

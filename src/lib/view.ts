@@ -2,7 +2,7 @@ import { DateTime } from "luxon";
 import { formatCountdown, formatRule, formatWhen } from "./format.ts";
 import { evaluate, upcomingStarts, type Occurrence, type Phase } from "./schedule.ts";
 import type { Category, Timer } from "./types.ts";
-import { isDuplicateWorldBoss } from "./field-bosses.ts";
+import { isDuplicateWorldBoss, NEZEKAN, VAIZEL } from "./field-bosses.ts";
 
 export type RowView = {
   id: string;
@@ -108,17 +108,43 @@ export function discordFaction(
   now: DateTime,
   timeZone: string,
 ): string {
-  const elyos = fieldZone === "verteron";
-  const title = elyos ? "ELYOS Timer Yustiel" : "ASMODIAN Timer Marchutan";
   const stamp = now.setZone(timeZone);
   const stand = stamp.isValid ? stamp.toFormat("dd.MM. HH:mm") : "--.--. --:--";
-  const header = `**${title} Stand ${stand} Uhr**`;
+  if (fieldZone === "verteron") {
+    const bosses = timers.filter((timer) => isFieldBoss(timer) && !isDuplicateWorldBoss(timer) && factionBoss(timer, fieldZone));
+    return [
+      discordBlock(
+        "ELYOS Rift Nezekan",
+        bosses.filter((timer) => timer.id.startsWith(`nm-${NEZEKAN}-`)),
+        stand,
+        now,
+        timeZone,
+        "Nezekan report is not loaded.",
+      ),
+      discordBlock(
+        "ELYOS Abyss Vaizel",
+        bosses.filter((timer) => timer.id.startsWith(`nm-${VAIZEL}-`)),
+        stand,
+        now,
+        timeZone,
+        "Vaizel report is not loaded.",
+      ),
+    ].join("\n\n");
+  }
+  const header = `**ASMODIAN Timer Marchutan Stand ${stand} Uhr**`;
   const bosses = timers.filter((timer) => isFieldBoss(timer) && !isDuplicateWorldBoss(timer) && factionBoss(timer, fieldZone));
-  if (elyos && bosses.length === 0) return `${header}\nYustiel report is not loaded.`;
+  return discordBody(header, bosses, now, timeZone, "No bosses with a time.");
+}
+
+function discordBlock(title: string, bosses: Timer[], stand: string, now: DateTime, timeZone: string, missing: string): string {
+  return discordBody(`**${title} Stand ${stand} Uhr**`, bosses, now, timeZone, bosses.length === 0 ? missing : "No bosses with a time.");
+}
+
+function discordBody(header: string, bosses: Timer[], now: DateTime, timeZone: string, empty: string): string {
   const lines = bosses
     .flatMap((timer) => discordLine(timer, now, timeZone))
     .sort((left, right) => left.rank - right.rank || left.name.localeCompare(right.name));
-  if (lines.length === 0) return `${header}\nNo bosses with a time.`;
+  if (lines.length === 0) return `${header}\n${empty}`;
   return [header, ...lines.map((line) => line.text)].join("\n");
 }
 

@@ -9,7 +9,7 @@ import { bindEditor } from "./editor.ts";
 import { esc } from "./lib/html.ts";
 import { pullCatalog } from "./lib/catalog.ts";
 import { applySpawns, parseSpawns } from "./lib/paste.ts";
-import { applyFieldReports, pullFieldFeed, reportsFromFeed, YUSTIEL } from "./lib/field-bosses.ts";
+import { applyEnemyReports, applyFieldReports, enemyFieldReports, pullFieldFeed, reportsFromFeed } from "./lib/field-bosses.ts";
 import { alertsFrom, evaluate, inQuietHours, markKilled, markSeen, zoneOk, type Occurrence } from "./lib/schedule.ts";
 import { exportTimers, importTimers } from "./lib/share.ts";
 import { playAlert, unlockSound } from "./lib/sound.ts";
@@ -695,7 +695,7 @@ async function refreshFieldBosses(quiet: boolean): Promise<void> {
     const nowMs = Date.now();
     const reports = reportsFromFeed(feed, nowMs);
     const before = state.timers.length;
-    riftTimers = applyFieldReports([], reportsFromFeed(feed, nowMs, YUSTIEL), state.settings.defaultLeadMinutes, YUSTIEL);
+    riftTimers = applyEnemyReports(enemyFieldReports(feed, nowMs), state.settings.defaultLeadMinutes);
     state.timers = applyFieldReports(state.timers, reports, state.settings.defaultLeadMinutes);
     const added = state.timers.length - before;
     state.settings.fieldBossesUpdatedAt = new Date().toISOString();
@@ -870,7 +870,7 @@ async function copyDiscord(): Promise<void> {
   const text = discordFaction(elyos ? riftTimers : state.timers, state.settings.fieldZone, DateTime.now(), state.settings.timeZone);
   try {
     await navigator.clipboard.writeText(text);
-    if (status) status.textContent = elyos ? "Copied Yustiel bosses." : "Copied Marchutan bosses.";
+    if (status) status.textContent = elyos ? "Copied Elyos bosses." : "Copied Marchutan bosses.";
   } catch {
     if (status) status.textContent = "Could not copy.";
   }

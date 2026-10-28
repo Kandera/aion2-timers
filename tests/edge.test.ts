@@ -58,40 +58,41 @@ test("empty copy matches the overlay", () => {
   state.timers = [];
   assert.equal(edgeSnapshot(state, now).empty, "No timers on the overlay.");
 });
-test("rift view shows Yustiel field bosses and keeps pinned events", () => {
+test("rift view shows Elyos field bosses and keeps pinned events", () => {
   const state = app([
     timer("nm-2305-1", "Immortal Gartua", { nextAt: "2026-10-15T18:00:00.000Z", note: "Altgard · Remote Island" }),
     clock("shugo", "Shugo Festival", { kind: "daily", hour: 23, minute: 0 }),
   ]);
-  const yustiel = timer("nm-1305-9", "Eternal Gartua", {
+  const nezekan = timer("nm-1302-9", "Eternal Gartua", {
     overlay: false,
     nextAt: "2026-10-15T18:05:00.000Z",
     note: "Verteron · Sky Island",
   });
-  const up = timer("nm-1305-2", "Neikel of the East", {
+  const up = timer("nm-1302-2", "Neikel of the East", {
     overlay: false,
     nextAt: null,
     note: "Verteron · Peak · Reported up",
   });
-  const off = edgeSnapshot(state, now, false, { on: false, timers: [yustiel, up] });
+  const off = edgeSnapshot(state, now, false, { on: false, timers: [nezekan, up] });
   assert.equal(off.rift, false);
-  assert.equal(off.rows.some((row) => row.id.startsWith("nm-1305")), false);
+  assert.equal(off.rows.some((row) => row.id.startsWith("nm-1302")), false);
   assert.equal(off.rows.some((row) => row.id === "nm-2305-1"), true);
 
-  const on = edgeSnapshot(state, now, false, { on: true, timers: [yustiel, up] });
+  const on = edgeSnapshot(state, now, false, { on: true, timers: [nezekan, up] });
   assert.equal(on.rift, true);
   assert.deepEqual(
     on.rows.map((row) => row.id),
-    ["nm-1305-2", "nm-1305-9", "shugo"],
+    ["nm-1302-2", "nm-1302-9", "shugo"],
   );
   assert.equal(on.rows[0]?.countdown, "Up");
   assert.equal(on.rows[0]?.detail, "Up");
-  assert.match(on.note, /Yustiel/);
+  assert.match(on.note, /Nezekan/);
+  assert.match(on.note, /Vaizel/);
 });
 
-test("rift view says when the Yustiel report is missing", () => {
+test("rift view says when the Elyos report is missing", () => {
   const snapshot = edgeSnapshot(app([]), now, false, { on: true, timers: [] });
-  assert.equal(snapshot.empty, "Yustiel report is not loaded.");
+  assert.equal(snapshot.empty, "Elyos report is not loaded.");
   assert.equal(snapshot.rows.length, 0);
 });
 

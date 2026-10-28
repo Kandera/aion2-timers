@@ -6,7 +6,10 @@ export const FIELD_BOSS_URL =
   "https://raw.githubusercontent.com/Not4You-Dev/NotMeter-Cache/main/presence/notmeter-field-boss-public-ww-eu-expanded.json";
 
 export const MARCHUTAN = 2305;
-export const YUSTIEL = 1305;
+/** EU Elyos paired with Marchutan in the Spacetime Rift, 28 Oct 2026. */
+export const NEZEKAN = 1302;
+/** EU Elyos paired with Marchutan in the Abyss, 28 Oct 2026. */
+export const VAIZEL = 1303;
 
 type BossName = { code: number; name: string; zone: string; location: string };
 
@@ -46,6 +49,23 @@ export function reportsFromFeed(value: unknown, nowMs = Date.now(), serverId = M
     }
   }
   return reports;
+}
+
+export function enemyFieldReports(value: unknown, nowMs = Date.now()): { serverId: number; reports: FieldReport[] }[] {
+  return [
+    {
+      serverId: NEZEKAN,
+      reports: reportsFromFeed(value, nowMs, NEZEKAN).filter((report) => report.zone === "Verteron"),
+    },
+    {
+      serverId: VAIZEL,
+      reports: reportsFromFeed(value, nowMs, VAIZEL).filter((report) => report.zone !== "Verteron" && report.zone !== "Altgard"),
+    },
+  ];
+}
+
+export function applyEnemyReports(parts: { serverId: number; reports: FieldReport[] }[], leadMinutes: number): Timer[] {
+  return parts.reduce<Timer[]>((timers, part) => applyFieldReports(timers, part.reports, leadMinutes, part.serverId), []);
 }
 
 export function applyFieldReports(timers: Timer[], reports: FieldReport[], leadMinutes: number, serverId = MARCHUTAN): Timer[] {

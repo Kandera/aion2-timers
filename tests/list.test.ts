@@ -98,9 +98,11 @@ test("Discord export names the faction server and keeps the other zone out", () 
   const unix = Math.floor(start.toSeconds());
   const text = discordFaction(
     [
-      rolling("nm-1305-1", "Eternal Gartua", "Verteron · Sky Island", start.toUTC().toISO()),
-      rolling("nm-1305-2", "Neikel of the East", "Verteron · Peak · Reported up", null),
-      rolling("nm-1305-3", "Melted Danar", "Altgard · Creion Campsite", start.toUTC().toISO()),
+      rolling("nm-1302-1", "Eternal Gartua", "Verteron · Sky Island", start.toUTC().toISO()),
+      rolling("nm-1302-2", "Neikel of the East", "Verteron · Peak · Reported up", null),
+      rolling("nm-1305-9", "Old Yustiel", "Verteron · Peak", start.toUTC().toISO()),
+      rolling("nm-1303-1", "Argo, the Spirit King", "Chaotic Lower Reshanta", start.toUTC().toISO()),
+      rolling("nm-1302-3", "Melted Danar", "Altgard · Creion Campsite", start.toUTC().toISO()),
       {
         ...rolling("shugo-festival", "Shugo Festival", "", start.toUTC().toISO()),
         category: "event",
@@ -111,10 +113,13 @@ test("Discord export names the faction server and keeps the other zone out", () 
     now,
     zone,
   );
-  assert.match(text, /^\*\*ELYOS Timer Yustiel Stand 27\.10\. 23:45 Uhr\*\*/);
+  assert.match(text, /\*\*ELYOS Rift Nezekan Stand 27\.10\. 23:45 Uhr\*\*/);
+  assert.match(text, /\*\*ELYOS Abyss Vaizel Stand 27\.10\. 23:45 Uhr\*\*/);
   assert.match(text, new RegExp(`\\*\\*Eternal Gartua\\*\\* — <t:${unix}:t> \\(<t:${unix}:R>\\) — Sky Island`));
   assert.match(text, /\*\*Neikel of the East\*\* — Up — Peak/);
+  assert.match(text, /\*\*Argo, the Spirit King\*\*/);
   assert.equal(text.includes("Melted Danar"), false);
+  assert.equal(text.includes("Old Yustiel"), false);
   assert.equal(text.includes("Shugo"), false);
   const asmo = discordFaction(
     [rolling("nm-2305-1", "Immortal Gartua", "Altgard · Remote Island", start.toUTC().toISO())],
