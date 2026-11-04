@@ -28,6 +28,7 @@ test("catalog timers resolve on a Wednesday afternoon", () => {
     "arena-of-tactics": "2026-10-14T19:00:00",
     "artifact-siege": "2026-10-15T21:00:00",
     "watcher-kaira": "2026-10-14T16:00:00",
+    "spirit-king-argo": "2026-10-14T22:30:00",
     "executor-tamasa": "2026-10-15T21:40:00",
     "executor-argo": "2026-10-15T21:40:00",
     "executor-kaira": "2026-10-15T21:40:00",
@@ -112,6 +113,25 @@ test("Nahma matches the map countdown, ten minutes after 21:00", () => {
   const nahma = evaluate(timer("guardian-lord-nahma"), now, zone);
   assert.equal(nahma.start?.toFormat("HH:mm"), "21:10");
   assert.ok(Math.abs((nahma.remainingMs ?? 0) - 18 * 60_000) < 1000);
+});
+
+test("siege and the executors skip Monday after 4 November", () => {
+  const monday = at("2026-11-02T20:00:00");
+  assert.equal(monday.weekday, 1);
+  for (const id of ["artifact-siege", "executor-tamasa", "executor-argo", "executor-kaira"]) {
+    const start = evaluate(timer(id), monday, zone).start;
+    assert.equal(start?.weekday, 4, id);
+    assert.equal(start?.toFormat("yyyy-MM-dd"), "2026-11-05", id);
+  }
+  assert.equal(evaluate(timer("artifact-siege"), monday, zone).start?.toFormat("HH:mm"), "21:00");
+  assert.equal(evaluate(timer("executor-tamasa"), monday, zone).start?.toFormat("HH:mm"), "21:40");
+});
+
+test("Spirit King Argo is 10:30 and 22:30", () => {
+  const afternoon = evaluate(timer("spirit-king-argo"), at("2026-11-04T14:36:00"), zone);
+  assert.equal(afternoon.start?.toFormat("HH:mm"), "22:30");
+  const night = evaluate(timer("spirit-king-argo"), at("2026-11-04T22:40:00"), zone);
+  assert.equal(night.start?.toFormat("yyyy-MM-dd HH:mm"), "2026-11-05 10:30");
 });
 
 test("a Berlin wall-clock event follows the spring forward", () => {

@@ -2,7 +2,7 @@
 
 Desktop timers for Aion 2 events, bosses, and your own field bosses. The overlay follows what you pin in the editor.
 
-It does not read the game client, packets, or memory. V:0.1.12 by Kandera. Licensed under MIT.
+It does not read the game client, packets, or memory. V:0.1.13 by Kandera. Licensed under MIT.
 
 ## Install
 
@@ -13,6 +13,13 @@ Settings → Updates checks GitHub for a newer signed setup. When one is availab
 Windows Defender can flag a new unsigned setup as a trojan and delete it. That can remove the installed app before the new one is in place. If an update disappears, install the setup from the release page. An exception on one PC does not help anyone else.
 
 Timers, pins, and settings are stored in an app data file, so an update does not clear them.
+
+## 0.1.13
+
+- Artifact Siege and the executors are Thursday and Saturday. Monday is gone. The clock is unchanged: siege 21:00, executors 21:40 on the map, Nahma 21:10.
+- A customized siege or executor keeps Monday until you reset it to the catalog.
+- Argo, the Spirit King is a fixed timer at 10:30 and 22:30. A field report no longer replaces it. The patch did not say how long it stays up.
+- Eternal Gartua, Immortal Gartua, and both High Commander Lagta respawn in 11 hours. The meter owns that prediction.
 
 ## 0.1.12
 
@@ -43,8 +50,8 @@ Timers, pins, and settings are stored in an app data file, so an update does not
 
 - Interval timers keep the Berlin hour after the 25 October fallback. Watcher Kaira is 01:00, 04:00, 07:00… The rift is 02:00, 05:00, 08:00…
 - Watcher Kaira stays up 30 minutes. Arena of Tactics closes at 13:00. Black Cloud Merchant refreshes every hour.
-- Nahma is 21:10 and the executors are 21:40, matching the map countdown.
-- A field-boss report from before the clock-change maintenance is dropped once its predicted time has passed. Refresh field bosses after the meter sees them again.
+- Nahma is 21:10 and the executors are 21:40, matching the map countdown. After 4 November the siege and the executors are Thursday and Saturday only.
+- Argo, the Spirit King is 10:30 and 22:30, the posted time, not a map reading.
 
 ## 0.1.7
 

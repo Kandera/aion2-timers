@@ -54,10 +54,10 @@
     "id": "artifact-siege",
     "name": "Artifact Siege",
     "category": "pvp",
-    "schedule": { "kind": "weekdays", "days": [1, 4, 6], "hour": 21, "minute": 0 },
+    "schedule": { "kind": "weekdays", "days": [4, 6], "hour": 21, "minute": 0 },
     "durationMinutes": 0,
     "entryMinutes": 0,
-    "note": "No duration until you set one."
+    "note": "Thu and Sat. Monday dropped 4 Nov."
   },
   {
     "id": "watcher-kaira",
@@ -69,31 +69,40 @@
     "note": "Up for 30 min."
   },
   {
+    "id": "spirit-king-argo",
+    "name": "Argo, the Spirit King",
+    "category": "boss",
+    "schedule": { "kind": "every", "hours": 12, "anchorHour": 10, "anchorMinute": 30 },
+    "durationMinutes": 0,
+    "entryMinutes": 0,
+    "note": "Posted time, 10:30 and 22:30. Not a map reading."
+  },
+  {
     "id": "executor-tamasa",
     "name": "Executor Tamasa",
     "category": "boss",
-    "schedule": { "kind": "weekdays", "days": [1, 4, 6], "hour": 21, "minute": 40 },
+    "schedule": { "kind": "weekdays", "days": [4, 6], "hour": 21, "minute": 40 },
     "durationMinutes": 0,
     "entryMinutes": 0,
-    "note": "Map countdown is 21:40."
+    "note": "Thu and Sat. Map countdown is 21:40."
   },
   {
     "id": "executor-argo",
     "name": "Executor Argo",
     "category": "boss",
-    "schedule": { "kind": "weekdays", "days": [1, 4, 6], "hour": 21, "minute": 40 },
+    "schedule": { "kind": "weekdays", "days": [4, 6], "hour": 21, "minute": 40 },
     "durationMinutes": 0,
     "entryMinutes": 0,
-    "note": "Map countdown is 21:40."
+    "note": "Thu and Sat. Map countdown is 21:40."
   },
   {
     "id": "executor-kaira",
     "name": "Executor Kaira",
     "category": "boss",
-    "schedule": { "kind": "weekdays", "days": [1, 4, 6], "hour": 21, "minute": 40 },
+    "schedule": { "kind": "weekdays", "days": [4, 6], "hour": 21, "minute": 40 },
     "durationMinutes": 0,
     "entryMinutes": 0,
-    "note": "Map countdown is 21:40."
+    "note": "Thu and Sat. Map countdown is 21:40."
   },
   {
     "id": "guardian-lord-nahma",

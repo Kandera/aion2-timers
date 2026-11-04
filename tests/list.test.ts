@@ -101,7 +101,8 @@ test("Discord export names the faction server and keeps the other zone out", () 
       rolling("nm-1302-1", "Eternal Gartua", "Verteron · Sky Island", start.toUTC().toISO()),
       rolling("nm-1302-2", "Neikel of the East", "Verteron · Peak · Reported up", null),
       rolling("nm-1305-9", "Old Yustiel", "Verteron · Peak", start.toUTC().toISO()),
-      rolling("nm-1303-1", "Argo, the Spirit King", "Chaotic Lower Reshanta", start.toUTC().toISO()),
+      rolling("nm-1303-1", "Bakarma", "Chaotic Lower Reshanta", start.toUTC().toISO()),
+      rolling("nm-1303-2", "Argo, the Spirit King", "Chaotic Lower Reshanta", start.toUTC().toISO()),
       rolling("nm-1302-3", "Melted Danar", "Altgard · Creion Campsite", start.toUTC().toISO()),
       {
         ...rolling("shugo-festival", "Shugo Festival", "", start.toUTC().toISO()),
@@ -117,7 +118,8 @@ test("Discord export names the faction server and keeps the other zone out", () 
   assert.match(text, /\*\*ELYOS Abyss Vaizel Stand 27\.10\. 23:45 Uhr\*\*/);
   assert.match(text, new RegExp(`\\*\\*Eternal Gartua\\*\\* — <t:${unix}:t> \\(<t:${unix}:R>\\) — Sky Island`));
   assert.match(text, /\*\*Neikel of the East\*\* — Up — Peak/);
-  assert.match(text, /\*\*Argo, the Spirit King\*\*/);
+  assert.match(text, /\*\*Bakarma\*\*/);
+  assert.equal(text.includes("Argo, the Spirit King"), false);
   assert.equal(text.includes("Melted Danar"), false);
   assert.equal(text.includes("Old Yustiel"), false);
   assert.equal(text.includes("Shugo"), false);

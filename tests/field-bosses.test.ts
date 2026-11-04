@@ -101,15 +101,15 @@ test("rift bosses come from Nezekan and Abyss bosses from Vaizel", () => {
   const vaizel = parts.find((part) => part.serverId === 1303)?.reports ?? [];
   assert.equal(nezekan.some((report) => report.name === "Neikel of the East"), true);
   assert.equal(nezekan.some((report) => report.name === "Argo, the Spirit King"), false);
-  assert.equal(vaizel.some((report) => report.name === "Argo, the Spirit King"), true);
+  assert.equal(vaizel.some((report) => report.name === "Argo, the Spirit King"), false);
   assert.equal(vaizel.some((report) => report.name === "Neikel of the East"), false);
   const timers = applyEnemyReports(parts, 5);
   assert.equal(timers.find((timer) => timer.name === "Neikel of the East")?.id, "nm-1302-2100003");
-  assert.equal(timers.find((timer) => timer.name === "Argo, the Spirit King")?.id, "nm-1303-2600068");
+  assert.equal(timers.some((timer) => timer.name === "Argo, the Spirit King"), false);
   assert.equal(timers.some((timer) => timer.id.startsWith("nm-1305-")), false);
 });
 
-test("a down Abyss field boss is a timer, a fixed world boss is not", () => {
+test("a down field boss is a timer, a fixed world boss is not", () => {
   const reports = reportsFromFeed(
     {
       servers: [
@@ -118,6 +118,7 @@ test("a down Abyss field boss is a timer, a fixed world boss is not", () => {
           maps: [
             {
               entries: [
+                { bossCode: 2400800, targetAt: Date.parse("2026-10-15T10:35:00.000Z") },
                 { bossCode: 2600068, targetAt: Date.parse("2026-10-15T10:20:00.000Z") },
                 { bossCode: 2600097, targetAt: Date.parse("2026-10-17T19:30:00.000Z") },
               ],
@@ -128,13 +129,15 @@ test("a down Abyss field boss is a timer, a fixed world boss is not", () => {
     },
     now,
   );
-  assert.equal(reports.some((report) => report.name === "Argo, the Spirit King"), true);
+  assert.equal(reports.some((report) => report.name === "Immortal Gartua"), true);
+  assert.equal(reports.some((report) => report.name === "Argo, the Spirit King"), false);
   assert.equal(reports.some((report) => report.name === "Executor Argo"), false);
   const timers = applyFieldReports([], reports, 5);
-  const argo = timers.find((timer) => timer.name === "Argo, the Spirit King");
-  assert.equal(argo?.id, "nm-2305-2600068");
-  assert.equal(argo?.nextAt, "2026-10-15T10:20:00.000Z");
-  assert.equal(shownTimers(timers, "altgard").some((timer) => timer.id === "nm-2305-2600068"), true);
+  const gartua = timers.find((timer) => timer.name === "Immortal Gartua");
+  assert.equal(gartua?.id, "nm-2305-2400800");
+  assert.equal(gartua?.nextAt, "2026-10-15T10:35:00.000Z");
+  assert.equal(shownTimers(timers, "altgard").some((timer) => timer.id === "nm-2305-2400800"), true);
+  assert.equal(timers.some((timer) => timer.name === "Argo, the Spirit King"), false);
   assert.equal(timers.some((timer) => timer.name === "Executor Argo"), false);
 });
 
@@ -184,13 +187,15 @@ test("the first load drops pasted tests and old pulled field bosses", () => {
   const mixed = [
     boss("nm-2305-1", "Altgard boss", false, false),
     boss("nm-2305-2", "Verteron boss", false, false),
-    boss("nm-2305-3", "Argo, the Spirit King", false, false),
+    boss("nm-2305-3", "Bakarma", false, false),
     boss("nm-2305-4", "Executor Argo", false, false),
+    boss("nm-2305-5", "Argo, the Spirit King", false, false),
   ];
   mixed[0].note = "Altgard · Remote Island";
   mixed[1].note = "Verteron · Laborer's Rest Stop";
   mixed[2].note = "Chaotic Lower Reshanta";
   mixed[3].note = "Chaotic Lower Reshanta";
+  mixed[4].note = "Chaotic Lower Reshanta";
   const visible = shownTimers(mixed, "altgard").map((timer) => timer.id);
   assert.deepEqual(visible, ["nm-2305-1", "nm-2305-3"]);
 });
