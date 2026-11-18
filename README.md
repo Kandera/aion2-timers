@@ -2,7 +2,7 @@
 
 Desktop timers for Aion 2 events, bosses, and your own field bosses. The overlay follows what you pin in the editor.
 
-It does not read the game client, packets, or memory. V:0.1.13 by Kandera. Licensed under MIT.
+It does not read the game client, packets, or memory. V:0.1.14 by Kandera. Licensed under MIT.
 
 ## Install
 
@@ -13,6 +13,10 @@ Settings → Updates checks GitHub for a newer signed setup. When one is availab
 Windows Defender can flag a new unsigned setup as a trojan and delete it. That can remove the installed app before the new one is in place. If an update disappears, install the setup from the release page. An exception on one PC does not help anyone else.
 
 Timers, pins, and settings are stored in an app data file, so an update does not clear them.
+
+## 0.1.14
+
+- Nov 11 notes did not move a clock. Siege stays Thursday and Saturday at 21:00. Executors stay 21:40 on the map. Nahma stays Friday and Sunday at 21:10.
 
 ## 0.1.13
 
